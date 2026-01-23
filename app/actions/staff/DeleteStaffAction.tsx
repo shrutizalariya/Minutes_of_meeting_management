@@ -1,0 +1,13 @@
+"use server"
+
+import { prisma } from "@/lib/prisma";
+import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
+
+async function DeleteStaffAction(id:number){
+    await prisma.staff.delete({where:{StaffID:id}});
+    revalidatePath("/staff");
+    redirect("/staff");
+}
+
+export {DeleteStaffAction};
