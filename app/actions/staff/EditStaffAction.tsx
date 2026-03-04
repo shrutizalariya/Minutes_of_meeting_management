@@ -1,41 +1,41 @@
 "use server";
-
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
-async function EditStaffAction(formData: FormData) {
-  const idValue = formData.get("StaffID");
+export async function EditStaffAction(formData: FormData) {
+  const StaffID = Number(formData.get("StaffID"));
+  const StaffName = formData.get("StaffName") as string;
+  const CountryCode = formData.get("CountryCode") as string;
+  const MobileNo = formData.get("MobileNo") as string;
+  const EmailAddress = formData.get("EmailAddress") as string;
+  const Remarks = formData.get("Remarks") as string;
+  const UserID = Number(formData.get("UserID"));
 
-  if (!idValue) {
-    throw new Error("Staff ID is missing");
+  if (!StaffID || !StaffName || !MobileNo || !EmailAddress || !UserID) {
+    throw new Error("All required fields must be filled");
   }
 
-  const id = Number(idValue);
+  const existingStaffForUser = await prisma.staff.findUnique({
+    where: { UserID },
+  });
 
-  if (isNaN(id)) {
-    throw new Error("Invalid Staff ID");
+  if (existingStaffForUser && existingStaffForUser.StaffID !== StaffID) {
+    throw new Error("This user is already linked to another staff.");
   }
-
-  const staffname = formData.get("StaffName") as string;
-  const mobileno = formData.get("MobileNo") as string;
-  const emailaddress = formData.get("EmailAddress") as string;
-  const remarks = formData.get("Remarks") as string;
-
+  
   await prisma.staff.update({
-    where: {
-      StaffID: id,
-    },
+    where: { StaffID },
     data: {
-      StaffName: staffname,
-      MobileNo: mobileno,
-      EmailAddress: emailaddress,
-      Remarks: remarks,
+      StaffName,
+      MobileNo: `${CountryCode}${MobileNo}`,
+      EmailAddress,
+      Remarks,
+      UserID,
+      Modified: new Date(),
     },
   });
 
   revalidatePath("/staff");
   redirect("/staff");
 }
-
-export { EditStaffAction };

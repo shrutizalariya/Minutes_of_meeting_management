@@ -29,6 +29,8 @@ model meetings {
   MeetingTypeID        Int
   MeetingDescription   String?         @db.VarChar(255)
   DocumentPath         String?         @db.VarChar(255)
+  Status               String          @default("Scheduled") @db.VarChar(50)
+  Location             String?         @db.VarChar(255)
   Created              DateTime?       @default(now()) @db.DateTime(0)
   Modified             DateTime?       @default(now()) @db.DateTime(0)
   IsCancelled          Boolean?        @default(false)
@@ -57,14 +59,18 @@ model staff {
   Remarks       String?         @db.VarChar(255)
   Created       DateTime?       @default(now()) @db.DateTime(0)
   Modified      DateTime?       @default(now()) @db.DateTime(0)
+  UserID        Int?            @unique(map: "UserID")
   meetingmember meetingmember[]
+  user          users?          @relation(fields: [UserID], references: [Id], onDelete: Cascade, onUpdate: NoAction, map: "fk_staff_user")
 }
 
 model users {
   Id         Int       @id @default(autoincrement())
   Name       String?   @db.VarChar(100)
-  Email      String    @unique(map: "Email") @db.VarChar(100)
+  Email      String?   @unique(map: "Email") @db.VarChar(100)
   Password   String    @db.VarChar(255)
+  Role       String    @db.VarChar(100)
   CreatedAt  DateTime? @default(now()) @db.Timestamp(0)
   ModifiedAt DateTime? @default(now()) @db.Timestamp(0)
+  staff      staff?
 }

@@ -1,36 +1,53 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
-import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
+import fs from "fs";
+import path from "path";
 
 export async function AddMeetingAction(formData: FormData) {
-  // Required fields
-  const MeetingDateStr = formData.get("MeetingDate") as string;
-  const MeetingTypeIDStr = formData.get("MeetingTypeID") as string;
+  const MeetingDate = formData.get("MeetingDate") as string;
+  const MeetingTypeID = Number(formData.get("MeetingTypeID"));
+  const MeetingDescription = formData.get("MeetingDescription") as string | null;
+  const file = formData.get("DocumentPath") as File | null;
 
-  if (!MeetingDateStr || !MeetingTypeIDStr) {
-    throw new Error("Meeting Date and Meeting Type are required");
+  let DocumentPath: string | null = null;
+
+
+
+  if (file && file.size > 0) {
+    // Convert file to buffer
+    const bytes = await file.arrayBuffer();
+    const buffer = Buffer.from(bytes);
+
+    // Ensure upload directory exists
+    const uploadDir = path.join(
+      process.cwd(),
+      "public/uploads/meeting_docs"
+    );
+
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
+    }
+
+    // Save file
+    const filePath = path.join(uploadDir, file.name);
+    fs.writeFileSync(filePath, buffer);
+
+    // Public path to store in DB
+    DocumentPath = `/uploads/meeting_docs/${file.name}`;
   }
 
-  const MeetingDate = new Date(MeetingDateStr);
-  const MeetingTypeID = Number(MeetingTypeIDStr);
-
-  if (isNaN(MeetingTypeID)) {
-    throw new Error("Invalid Meeting Type");
-  }
-
-  const MeetingDescription = (formData.get("MeetingDescription") as string);
-  const DocumentPath = (formData.get("DocumentPath") as string) || null;
-  const IsCancelled = formData.get("IsCancelled") === "on" ? true : false;
-  const CancellationDateTimeStr = formData.get("CancellationDateTime") as string;
-  const CancellationDateTime = CancellationDateTimeStr ? new Date(CancellationDateTimeStr) : null;
-  const CancellationReason = (formData.get("CancellationReason") as string) || null;
-
- const data = {MeetingDate, MeetingTypeID, MeetingDescription, DocumentPath, IsCancelled, CancellationDateTime, CancellationReason};
-
-  // Create the meeting record
-  await prisma.meetings.create({ data });
+  await prisma.meetings.create({
+    data: {
+      MeetingDate: new Date(MeetingDate),
+      MeetingTypeID,
+      MeetingDescription,
+      DocumentPath,
+      IsCancelled: false, // default
+    },
+  });
 
   revalidatePath("/meetings");
   redirect("/meetings");

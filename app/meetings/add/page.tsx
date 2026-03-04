@@ -1,109 +1,90 @@
 import { AddMeetingAction } from "@/app/actions/AddMeetingAction";
+import React from "react";
 import { prisma } from "@/lib/prisma";
-
-export default async function AddMeetingPage() {
-  // Fetch meeting types from DB
-  const meetingTypes = await prisma.meetingtype.findMany();
+import { Calendar, Info, FileText } from "lucide-react"; 
+export default async function AddMeeting() {
+  const m = await prisma.meetingtype.findMany({
+    select: {
+      MeetingTypeID: true,
+      MeetingTypeName: true,
+    },
+  });
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100 p-4">
-      <form
-        action={AddMeetingAction}
-        className="bg-white p-6 rounded-lg shadow-md w-full max-w-lg space-y-4"
-      >
-        <h2 className="text-2xl font-semibold text-gray-800">Add Meeting</h2>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center p-6">
+      <div className="w-full max-w-lg bg-white rounded-3xl shadow-2xl p-8 space-y-6">
+        <h2 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
+          <FileText className="w-6 h-6 text-blue-600" /> Add Meeting
+        </h2>
 
-        {/* Meeting Date */}
-        <div>
-          <label className="block text-sm text-gray-600 mb-1">Meeting Date</label>
-          <input
-            type="datetime-local"
-            name="MeetingDate"
-            required
-            className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-        </div>
+        <form action={AddMeetingAction} className="space-y-5">
+          {/* Meeting Date */}
+          <div className="flex flex-col">
+            <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1">
+              <Calendar className="w-4 h-4 text-gray-500" /> Meeting Date
+            </label>
+            <input
+              type="datetime-local"
+              name="MeetingDate"
+              required
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+            />
+          </div>
 
-        {/* Meeting Type */}
-        <div>
-          <label className="block text-sm text-gray-600 mb-1">Meeting Type</label>
-          <select
-            name="MeetingTypeID"
-            required
-            className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          {/* Meeting Type */}
+          <div className="flex flex-col">
+            <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1">
+              <Info className="w-4 h-4 text-gray-500" /> Meeting Type
+            </label>
+            <select
+              name="MeetingTypeID"
+              required
+              className="w-full border border-gray-300 px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+            >
+              <option value="">Select Meeting Type</option>
+              {m.map((type) => (
+                <option key={type.MeetingTypeID} value={type.MeetingTypeID}>
+                  {type.MeetingTypeName}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Meeting Description */}
+          <div className="flex flex-col">
+            <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1">
+              <FileText className="w-4 h-4 text-gray-500" /> Description
+            </label>
+            <input
+              type="text"
+              name="MeetingDescription"
+              placeholder="Enter description"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+            />
+          </div>
+
+          {/* Document Upload */}
+          <div className="flex flex-col">
+            <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1">
+              <FileText className="w-4 h-4 text-gray-500" /> Upload Document
+            </label>
+            <input
+              type="file"
+              name="DocumentPath"
+              accept=".pdf,.doc,.docx"
+              className="w-full border border-gray-300 px-4 py-2 rounded-lg cursor-pointer hover:bg-gray-50 transition"
+            />
+          </div>
+
+          {/* Submit Button */}
+          <button
+            type="submit"
+            className="w-full py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-xl shadow-lg hover:from-blue-700 hover:to-purple-700 transition flex items-center justify-center gap-2"
           >
-            <option value="">Select a meeting type</option>
-            {meetingTypes.map((mt) => (
-              <option key={mt.MeetingTypeID} value={mt.MeetingTypeID}>
-                {mt.MeetingTypeName}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        {/* Description */}
-        <div>
-          <label className="block text-sm text-gray-600 mb-1">Description</label>
-          <textarea
-            name="MeetingDescription"
-            rows={3}
-            placeholder="Optional description"
-            className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          ></textarea>
-        </div>
-
-        {/* Document Path */}
-        <div>
-          <label className="block text-sm text-gray-600 mb-1">Document Path</label>
-          <input
-            type="text"
-            name="DocumentPath"
-            placeholder="Optional file path or URL"
-            className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-        </div>
-
-        {/* Is Cancelled */}
-        <div className="flex items-center space-x-2">
-          <input
-            type="checkbox"
-            name="IsCancelled"
-            id="isCancelled"
-            className="h-4 w-4 text-red-600 border-gray-300 rounded focus:ring-2 focus:ring-red-500"
-          />
-          <label htmlFor="isCancelled" className="text-gray-700">
-            Is Cancelled
-          </label>
-        </div>
-
-        {/* Cancellation Date & Reason */}
-        <div>
-          <label className="block text-sm text-gray-600 mb-1">Cancellation Date & Time</label>
-          <input
-            type="datetime-local"
-            name="CancellationDateTime"
-            className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500"
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm text-gray-600 mb-1">Cancellation Reason</label>
-          <input
-            type="text"
-            name="CancellationReason"
-            placeholder="Optional reason"
-            className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500"
-          />
-        </div>
-
-        {/* Submit */}
-        <button
-          type="submit"
-          className="w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700 transition"
-        >
-          Save Meeting
-        </button>
-      </form>
+            Add Meeting
+          </button>
+        </form>
+      </div>
     </div>
   );
 }
