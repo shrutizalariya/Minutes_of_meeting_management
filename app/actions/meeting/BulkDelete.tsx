@@ -13,7 +13,7 @@ export async function BulkDeleteMeetingsAction(ids: number[]) {
     revalidatePath("/dashboard/admin/meetings");
     return { success: true };
   } catch (error) {
-    console.error("Bulk Delete Error:", error);
+    console.error("Bulk Delete Meetings Error:", error);
     return { success: false };
   }
 }

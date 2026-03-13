@@ -3,8 +3,10 @@ import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import DeleteMeeting from "@/app/ui/DeleteButtonForMeetings";
 import MasterCheckbox from "@/app/ui/MasterCheckbox";
-import BulkDeleteButton from "@/app/ui/BulkDeleteButton";
+import BulkDeleteButton from "@/app/ui/BulkDeleteButtonForMeetings";
 import PaginationControls from "@/app/ui/PaginationControls";
+import AutoRefresh from "@/app/ui/AutoRefresh";
+import ExportExcelButton from "@/app/ui/ExportExcelButton";
 import {
   Plus,
   Download,
@@ -40,26 +42,33 @@ interface SearchParams {
 export default async function MeetingsPage({
   searchParams,
 }: {
-  searchParams: SearchParams;
+  searchParams: Promise<SearchParams>;
 }) {
-  // safely read all params
-  const keyword   = searchParams?.keyword   ?? "";
-  const venue     = searchParams?.venue     ?? "";
-  const type      = searchParams?.type      ?? "";
-  const status    = searchParams?.status    ?? "";
-  const staff     = searchParams?.staff     ?? "";
-  const cancelled = searchParams?.cancelled ?? "";
-  const from      = searchParams?.from      ?? "";
-  const to        = searchParams?.to        ?? "";
-  const limit     = searchParams?.limit     ?? "all";
-  const page      = Number(searchParams?.page ?? "1");
+  const params = await searchParams;
+  const keyword = params?.keyword ?? "";
+  const venue = params?.venue ?? "";
+  const type = params?.type ?? "";
+  const status = params?.status ?? "";
+  const staff = params?.staff ?? "";
+  const cancelled = params?.cancelled ?? "";
+  const from = params?.from ?? "";
+  const to = params?.to ?? "";
+  const limit = params?.limit ?? "all";
+  const page = Number(params?.page ?? "1");
 
   // ── WHERE clause ──────────────────────────────────────────────────────────
   const where: Record<string, unknown> = {};
   const andClauses: Record<string, unknown>[] = [];
 
-  if (keyword)
-    andClauses.push({ MeetingDescription: { contains: keyword } });
+  if (keyword) {
+    andClauses.push({
+      OR: [
+        { MeetingDescription: { contains: keyword } },
+        { Location: { contains: keyword } },
+        { meetingtype: { MeetingTypeName: { contains: keyword } } },
+      ],
+    });
+  }
   if (venue)
     andClauses.push({ Location: { contains: venue } });
   if (type)
@@ -74,7 +83,7 @@ export default async function MeetingsPage({
     andClauses.push({
       MeetingDate: {
         ...(from ? { gte: new Date(from) } : {}),
-        ...(to   ? { lte: new Date(to)   } : {}),
+        ...(to ? { lte: new Date(to) } : {}),
       },
     });
   }
@@ -87,45 +96,71 @@ export default async function MeetingsPage({
   if (andClauses.length > 0) where.AND = andClauses;
 
   // ── Counts ────────────────────────────────────────────────────────────────
-  const [totalAll, withDocs, filteredTotal, meetingTypes] = await Promise.all([
+  const [totalAll, scheduledCount, completedCount, cancelledCount, filteredTotal, meetingTypes] = await Promise.all([
     prisma.meetings.count(),
-    prisma.meetings.count({ where: { DocumentPath: { not: null } } }),
+    prisma.meetings.count({ where: { Status: "Scheduled" } }),
+    prisma.meetings.count({ where: { Status: "Completed" } }),
+    prisma.meetings.count({ where: { Status: "Cancelled" } }),
     prisma.meetings.count({ where }),
     prisma.meetingtype.findMany({ orderBy: { MeetingTypeName: "asc" } }),
   ]);
 
-  const withoutDocs = totalAll - withDocs;
-
   // ── Pagination ────────────────────────────────────────────────────────────
-  const hardLimit    = limit !== "all" ? Number(limit) : null;
+  const hardLimit = limit !== "all" ? Number(limit) : null;
   const effectiveTotal = hardLimit ? Math.min(hardLimit, filteredTotal) : filteredTotal;
-  const totalPages   = Math.max(1, Math.ceil(effectiveTotal / PAGE_SIZE));
-  const safePage     = Math.max(1, Math.min(page, totalPages));
-  const skip         = (safePage - 1) * PAGE_SIZE;
+  const totalPages = Math.max(1, Math.ceil(effectiveTotal / PAGE_SIZE));
+  const safePage = Math.max(1, Math.min(page, totalPages));
+  const skip = (safePage - 1) * PAGE_SIZE;
 
   // ── Query ─────────────────────────────────────────────────────────────────
-const rows = await prisma.meetings.findMany({
-  where,
-  include: {
-    meetingtype:   true,
-    meetingmember: { include: { staff: true } },
-  },
-  orderBy: { MeetingID: "desc" },
-  // If user selected Top 10, but they are on page 2, we shouldn't show more than the hardLimit
-  take: PAGE_SIZE, 
-  skip: skip,
-});
+  const rows = await prisma.meetings.findMany({
+    where,
+    include: {
+      meetingtype: true,
+      meetingmember: { include: { staff: true } },
+    },
+    orderBy: { MeetingID: "desc" },
+    take: PAGE_SIZE,
+    skip: skip,
+  });
 
   // helper
   const fmtDate = (d: Date | null) =>
     d
       ? new Date(d).toLocaleDateString("en-US", {
-          year: "numeric", month: "short", day: "numeric",
-        })
+        year: "numeric", month: "short", day: "numeric",
+      })
       : "N/A";
 
   const statusClass = (s: string | null) =>
     s === "Scheduled" ? "scheduled" : s === "Completed" ? "completed" : "cancelled";
+
+  const meetingColumns = [
+    { header: "ID", key: "MeetingID" },
+    { header: "Title", key: "MeetingDescription" },
+    { header: "Type", key: "meetingtype.MeetingTypeName" },
+    { header: "Location", key: "Location" },
+    { header: "Date", key: "MeetingDate" },
+    { header: "Time", key: "MeetingTime" },
+    { header: "Status", key: "Status" },
+    { header: "Agenda", key: "Agenda" },
+    { header: "Discussion", key: "Discussion" },
+    { header: "Conclusions", key: "Conclusions" },
+    { header: "Participants", key: "participantsList" },
+    { header: "Cancelled", key: "IsCancelled" },
+    { header: "Cancellation Reason", key: "CancellationReason" },
+    { header: "Created At", key: "Created" },
+    { header: "Modified At", key: "Modified" },
+  ];
+
+  const exportRows = rows.map(r => ({
+    ...r,
+    MeetingDate: fmtDate(r.MeetingDate),
+    participantsList: r.meetingmember?.map(mm => mm.staff?.StaffName).join(", ") || "",
+    IsCancelled: r.IsCancelled ? "Yes" : "No",
+    Created: r.Created ? new Date(r.Created).toLocaleString() : "—",
+    Modified: r.Modified ? new Date(r.Modified).toLocaleString() : "—",
+  }));
 
   // ─────────────────────────────────────────────────────────────────────────
   return (
@@ -363,6 +398,7 @@ const rows = await prisma.meetings.findMany({
       `}</style>
 
       <div className="mi" key={JSON.stringify(searchParams)}>
+        <AutoRefresh intervalMs={5000} />
         {/* ══════════════════ HEADER ══════════════════ */}
         <div>
           <nav className="bc">
@@ -388,24 +424,24 @@ const rows = await prisma.meetings.findMany({
         {/* ══════════════════ STATS ══════════════════ */}
         <div className="ss">
           <div className="sc">
-            <div className="si blue"><ClipboardList size={20} /></div>
+            <div className="si blue"><Clock size={20} /></div>
             <div>
-              <div className="sl">Total Meetings</div>
-              <div className="sv">{totalAll}</div>
+              <div className="sl">Scheduled</div>
+              <div className="sv">{scheduledCount}</div>
             </div>
           </div>
           <div className="sc">
-            <div className="si green"><Download size={20} /></div>
+            <div className="si green"><ClipboardList size={20} /></div>
             <div>
-              <div className="sl">With Documents</div>
-              <div className="sv">{withDocs}</div>
+              <div className="sl">Completed</div>
+              <div className="sv">{completedCount}</div>
             </div>
           </div>
           <div className="sc">
             <div className="si amber"><CalendarDays size={20} /></div>
             <div>
-              <div className="sl">No Document</div>
-              <div className="sv">{withoutDocs}</div>
+              <div className="sl">Cancelled</div>
+              <div className="sv">{cancelledCount}</div>
             </div>
           </div>
         </div>
@@ -543,6 +579,11 @@ const rows = await prisma.meetings.findMany({
                 <Link href="/dashboard/admin/meetings" className="btn-reset">
                   <RotateCcw size={14} /> Reset
                 </Link>
+                <ExportExcelButton
+                  data={exportRows}
+                  columns={meetingColumns}
+                  fileName="meetings_comprehensive_data"
+                />
               </div>
               {/* ✅ Client Component — no event handler in server */}
               <BulkDeleteButton />
@@ -558,17 +599,17 @@ const rows = await prisma.meetings.findMany({
           </div>
 
           <div style={{ overflowX: "auto" }}>
-            <table>
+            <table id="report-table">
               <thead>
                 <tr>
-                  <th className="chk-cell">
+                  <th className="chk-cell" data-html2canvas-ignore>
                     {/* ✅ Client Component — no onChange in server */}
                     <MasterCheckbox />
                   </th>
                   <th>Meeting Details</th>
                   <th className="c">Status</th>
                   <th className="c">Attachment</th>
-                  <th className="r">Actions</th>
+                  <th className="r" data-html2canvas-ignore>Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -583,9 +624,9 @@ const rows = await prisma.meetings.findMany({
                     </td>
                   </tr>
                 ) : (
-                  rows.map((m) => (
+                  rows.map((m: any) => (
                     <tr key={m.MeetingID}>
-                      <td className="chk-cell">
+                      <td className="chk-cell" data-html2canvas-ignore>
                         <input
                           type="checkbox"
                           className="row-checkbox"
@@ -644,7 +685,13 @@ const rows = await prisma.meetings.findMany({
 
                       <td className="c">
                         {m.DocumentPath ? (
-                          <a href={m.DocumentPath} download className="btn-dl">
+                          <a
+                            href={m.DocumentPath.startsWith('http') ? m.DocumentPath : `/uploads/meeting_docs/${m.DocumentPath.split(/[\\/]/).pop()}`}
+                            download
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="btn-dl"
+                          >
                             <Download size={13} /> Download
                           </a>
                         ) : (
@@ -652,7 +699,7 @@ const rows = await prisma.meetings.findMany({
                         )}
                       </td>
 
-                      <td className="r">
+                      <td className="r" data-html2canvas-ignore>
                         <div className="ar">
                           <Link
                             href={`/dashboard/admin/meetings/${m.MeetingID}`}

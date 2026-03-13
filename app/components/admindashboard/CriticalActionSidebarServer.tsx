@@ -34,7 +34,7 @@ export default async function CriticalActionSidebar() {
 
   return (
     <div>
-      <h2 className="font-bold text-slate-800 text-sm uppercase tracking-wider mb-6">
+      <h2 className="font-bold text-slate-800 text-xs uppercase tracking-widest mb-6 opacity-50">
         Critical Action Items
       </h2>
 
@@ -50,6 +50,7 @@ export default async function CriticalActionSidebar() {
           return (
             <ActionItemWidget
               key={item.MeetingMemberID}
+              id={item.MeetingMemberID}
               task={item.meetings.MeetingDescription || "No description"}
               assigned={item.staff.StaffName}
               deadline={item.meetings.MeetingDate.toISOString()}

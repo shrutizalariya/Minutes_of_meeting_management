@@ -1,7 +1,8 @@
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import React from "react";
-import { Calendar, Tag, FileText, Info, Clock, ArrowLeft, CheckCircle, XCircle, Paperclip } from "lucide-react";
+import { Calendar, Tag, FileText, Info, Clock, ArrowLeft, CheckCircle, XCircle, Paperclip, Download } from "lucide-react";
+import ExportExcelButton from "@/app/ui/ExportExcelButton";
 
 async function GetById({ params }: { params: Promise<{ id: number }> }) {
   const { id } = await params;
@@ -19,16 +20,33 @@ async function GetById({ params }: { params: Promise<{ id: number }> }) {
         <div className="text-center">
           <p className="text-slate-400 font-bold uppercase tracking-widest text-xs">Error</p>
           <p className="text-slate-600 text-lg font-semibold">Meeting not found</p>
-          <Link href="/meetings" className="text-blue-600 text-sm font-bold mt-4 inline-block hover:underline">Return to list</Link>
+          <Link href="/dashboard/admin/meetings" className="text-blue-600 text-sm font-bold mt-4 inline-block hover:underline">Return to list</Link>
         </div>
       </div>
     );
   }
 
+  const minutesColumns = [
+    { header: "Meeting ID", key: "MeetingID" },
+    { header: "Title", key: "MeetingDescription" },
+    { header: "Type", key: "meetingtype.MeetingTypeName" },
+    { header: "Date", key: "formattedDate" },
+    { header: "Location", key: "Location" },
+    { header: "Agenda", key: "Agenda" },
+    { header: "Discussion", key: "Discussion" },
+    { header: "Conclusions", key: "Conclusions" },
+    { header: "Status", key: "Status" },
+  ];
+
+  const exportData = [{
+    ...data,
+    formattedDate: new Date(data.MeetingDate).toLocaleDateString()
+  }];
+
   return (
     <div className="min-h-screen flex items-center justify-center p-6">
       <div className="w-full max-w-lg bg-white rounded-3xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.08)] border border-slate-100 overflow-hidden">
-        
+
         {/* Header Section */}
         <div className="px-6 py-5 border-b border-slate-50 flex items-center justify-between bg-white">
           <div className="flex items-center gap-3">
@@ -41,20 +59,26 @@ async function GetById({ params }: { params: Promise<{ id: number }> }) {
             </div>
           </div>
 
-          <div className={`flex items-center gap-1.5 px-3 py-1 rounded-full border ${
-            data.IsCancelled 
-              ? "bg-red-50 text-red-600 border-red-100" 
+          <div className="flex items-center gap-3">
+            <div className={`flex items-center gap-1.5 px-3 py-1 rounded-full border ${data.IsCancelled
+              ? "bg-red-50 text-red-600 border-red-100"
               : "bg-emerald-50 text-emerald-600 border-emerald-100"
-          }`}>
-            <span className="text-[10px] font-bold uppercase tracking-tight">
-              {data.IsCancelled ? "Cancelled" : "Active"}
-            </span>
+              }`}>
+              <span className="text-[10px] font-bold uppercase tracking-tight">
+                {data.IsCancelled ? "Cancelled" : "Active"}
+              </span>
+            </div>
+            <ExportExcelButton
+              data={exportData}
+              columns={minutesColumns}
+              fileName={`Meeting_Minutes_${data.MeetingID}`}
+            />
           </div>
         </div>
 
         {/* Content Body */}
         <div className="p-6 space-y-5">
-          
+
           <div className="grid grid-cols-2 gap-4">
             {/* Date */}
             <div className="space-y-1 ml-1">
@@ -88,9 +112,9 @@ async function GetById({ params }: { params: Promise<{ id: number }> }) {
           <div className="space-y-1.5 ml-1">
             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Reference Document</p>
             {data.DocumentPath ? (
-              <a 
-                href={data.DocumentPath} 
-                target="_blank" 
+              <a
+                href={data.DocumentPath.startsWith('http') ? data.DocumentPath : `/uploads/meeting_docs/${data.DocumentPath.split(/[\\/]/).pop()}`}
+                target="_blank"
                 className="flex items-center justify-between p-3 bg-white border border-slate-200 rounded-xl hover:border-blue-400 hover:bg-blue-50/30 transition-all group"
               >
                 <div className="flex items-center gap-2 text-slate-600 group-hover:text-blue-600">
@@ -139,8 +163,8 @@ async function GetById({ params }: { params: Promise<{ id: number }> }) {
 
           {/* Action Footer - Return-Style Button */}
           <div className="pt-4">
-            <Link 
-              href="/dashboard/admin/meetings" 
+            <Link
+              href="/dashboard/admin/meetings"
               className="w-full inline-flex items-center justify-center gap-2 bg-white hover:bg-slate-50 text-slate-600 border border-slate-200 rounded-[10px] px-4 py-[0.7rem] text-[0.82rem] font-semibold transition-all duration-200 shadow-sm hover:shadow-md active:scale-[0.97] no-underline"
               style={{ fontFamily: "'Sora', sans-serif" }}
             >

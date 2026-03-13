@@ -71,6 +71,8 @@
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import fs from "fs";
+import path from "path";
 
 export async function EditMeetingAction(formData: FormData) {
 
@@ -91,16 +93,24 @@ export async function EditMeetingAction(formData: FormData) {
   const MeetingDescription =
     formData.get("MeetingDescription") as string;
 
-  const file =
-    formData.get("DocumentPath") as File;
-
-  const oldDoc =
-    formData.get("OldDocumentPath") as string;
+  const file = formData.get("DocumentPath") as File | null;
+  const oldDoc = formData.get("OldDocumentPath") as string | null;
 
   let DocumentPath = oldDoc;
 
   if (file && file.size > 0) {
-    DocumentPath = `/uploads/${file.name}`;
+    const bytes = await file.arrayBuffer();
+    const buffer = Buffer.from(bytes);
+
+    const uploadDir = path.join(process.cwd(), "public/uploads/meeting_docs");
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
+    }
+
+    const filePath = path.join(uploadDir, file.name);
+    fs.writeFileSync(filePath, buffer);
+
+    DocumentPath = `/uploads/meeting_docs/${file.name}`;
   }
 
   await prisma.meetings.update({

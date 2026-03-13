@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import React from "react";
-import { Calendar, Tag, User, Info, Clock, ArrowLeft, ShieldCheck, ShieldAlert } from "lucide-react";
+import { Calendar, Tag, User, Info, Clock, ArrowLeft, ShieldCheck, ShieldAlert, Edit } from "lucide-react";
 
 async function GetById({
   params,
@@ -26,11 +26,11 @@ async function GetById({
 
   if (!data) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#f8fafc]">
+      <div className="min-h-screen flex items-center justify-center bg-[#f8fafc] font-[Sora]">
         <div className="text-center">
           <p className="text-slate-400 font-bold uppercase tracking-widest text-xs">Error</p>
           <p className="text-slate-600 text-lg font-semibold">Meeting Member not found</p>
-          <Link href="/meetingmember" className="text-blue-600 text-sm font-bold mt-4 inline-block hover:underline">Return to list</Link>
+          <Link href="/dashboard/admin/meetingmember" className="text-blue-600 text-sm font-bold mt-4 inline-block hover:underline">Return to list</Link>
         </div>
       </div>
     );
@@ -38,8 +38,12 @@ async function GetById({
 
   return (
     <div className="min-h-screen bg-[#f8fafc] flex items-center justify-center p-6">
-      <div className="w-full max-w-lg bg-white rounded-3xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.08)] border border-slate-100 overflow-hidden">
-        
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&display=swap');
+      `}</style>
+
+      <div className="w-full max-w-lg bg-white rounded-3xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.08)] border border-slate-100 overflow-hidden" style={{ fontFamily: "'Sora', sans-serif" }}>
+
         {/* Header Section */}
         <div className="px-6 py-5 border-b border-slate-50 flex items-center justify-between bg-white">
           <div className="flex items-center gap-3">
@@ -51,7 +55,7 @@ async function GetById({
               <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">ID: {data.MeetingMemberID}</p>
             </div>
           </div>
-          
+
           {data.IsPresent ? (
             <div className="flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-600 rounded-full border border-emerald-100">
               <ShieldCheck size={12} strokeWidth={3} />
@@ -67,7 +71,7 @@ async function GetById({
 
         {/* Content Body */}
         <div className="p-6 space-y-6">
-          
+
           <div className="grid grid-cols-1 gap-5">
             {/* Staff Info */}
             <div className="flex items-start gap-4 p-3 rounded-2xl bg-slate-50/50 border border-slate-100">
@@ -129,30 +133,23 @@ async function GetById({
             </div>
           </div>
 
-          {/* Action Footer - High-End Button UI */}
-<div className="pt-4 flex items-center justify-between gap-4 w-full">
-  
-  {/* Refined Back Button */}
-  <Link 
-    href="/meetingmember" 
-    className="flex-1 inline-flex items-center justify-center gap-2 bg-white hover:bg-slate-50 text-slate-600 border border-slate-200 rounded-[12px] px-4 py-[0.7rem] text-[0.82rem] font-semibold transition-all duration-200 shadow-sm hover:shadow-md active:scale-[0.97]"
-    style={{ fontFamily: "'Sora', sans-serif" }}
-  >
-    <ArrowLeft size={15} strokeWidth={2.5} className="text-slate-400" />
-    Return to List
-  </Link>
+          <div className="pt-4 flex items-center justify-between gap-4 w-full">
+            <Link
+              href="/dashboard/admin/meetingmember"
+              className="flex-1 inline-flex items-center justify-center gap-2 bg-white hover:bg-slate-50 text-slate-600 border border-slate-200 rounded-[12px] px-4 py-[0.7rem] text-[0.82rem] font-semibold transition-all duration-200 shadow-sm hover:shadow-md active:scale-[0.97] no-underline"
+            >
+              <ArrowLeft size={15} strokeWidth={2.5} className="text-slate-400" />
+              Return
+            </Link>
 
-  {/* Matching Primary Action (Edit) */}
-  <Link
-    href={`/meetingmember/edit/${data.MeetingMemberID}`}
-    className="flex-1 inline-flex items-center justify-center gap-2 bg-gradient-to-br from-[#1e3a8a] to-[#1d4ed8] text-white border-none rounded-[12px] px-4 py-[0.7rem] text-[0.82rem] font-semibold transition-all duration-200 shadow-[0_4px_12px_rgba(29,78,216,0.3)] hover:-translate-y-[1px] hover:shadow-[0_6px_20px_rgba(29,78,216,0.35)] active:scale-[0.97] tracking-tight"
-    style={{ fontFamily: "'Sora', sans-serif" }}
-  >
-    <User size={15} strokeWidth={2.5} />
-    Edit Member
-  </Link>
-
-</div>
+            <Link
+              href={`/dashboard/admin/meetingmember/edit/${data.MeetingMemberID}`}
+              className="flex-1 inline-flex items-center justify-center gap-2 bg-gradient-to-br from-[#1e3a8a] to-[#1d4ed8] text-white border-none rounded-[12px] px-4 py-[0.7rem] text-[0.82rem] font-semibold transition-all duration-200 shadow-[0_4px_12px_rgba(29,78,216,0.3)] hover:-translate-y-[1px] hover:shadow-[0_6px_20px_rgba(29,78,216,0.35)] active:scale-[0.97] no-underline tracking-tight"
+            >
+              <Edit size={15} strokeWidth={2.5} />
+              Edit Member
+            </Link>
+          </div>
         </div>
       </div>
     </div>

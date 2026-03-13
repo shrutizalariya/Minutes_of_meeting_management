@@ -51,6 +51,49 @@ model meetingtype {
   meetings        meetings[]
 }
 
+model eventmember {
+  EventMemberID Int       @id @default(autoincrement())
+  EventID       Int
+  StaffID       Int
+  IsPresent     Boolean?  @default(false)
+  Remarks       String?   @db.VarChar(255)
+  Created       DateTime? @default(now()) @db.DateTime(0)
+  Modified      DateTime? @default(now()) @db.DateTime(0)
+  events        events    @relation(fields: [EventID], references: [EventID], onDelete: NoAction, onUpdate: NoAction, map: "fk_event")
+  staff         staff     @relation(fields: [StaffID], references: [StaffID], onDelete: NoAction, onUpdate: NoAction, map: "fk_event_staff")
+
+  @@index([EventID], map: "fk_event")
+  @@index([StaffID], map: "fk_event_staff")
+}
+
+model events {
+  EventID              Int           @id @default(autoincrement())
+  EventDate            DateTime      @db.DateTime(0)
+  EventTypeID          Int
+  EventDescription     String?       @db.VarChar(255)
+  DocumentPath         String?       @db.VarChar(255)
+  Status               String        @default("Scheduled") @db.VarChar(50)
+  Location             String?       @db.VarChar(255)
+  Created              DateTime?     @default(now()) @db.DateTime(0)
+  Modified             DateTime?     @default(now()) @db.DateTime(0)
+  IsCancelled          Boolean?      @default(false)
+  CancellationDateTime DateTime?     @db.DateTime(0)
+  CancellationReason   String?       @db.VarChar(255)
+  eventmember          eventmember[]
+  eventtype            eventtype     @relation(fields: [EventTypeID], references: [EventTypeID], onDelete: NoAction, onUpdate: NoAction, map: "fk_event_type")
+
+  @@index([EventTypeID], map: "fk_event_type")
+}
+
+model eventtype {
+  EventTypeID   Int       @id @default(autoincrement())
+  EventTypeName String    @db.VarChar(100)
+  Remarks       String?   @db.VarChar(255)
+  Created       DateTime? @default(now()) @db.DateTime(0)
+  Modified      DateTime? @default(now()) @db.DateTime(0)
+  events        events[]
+}
+
 model staff {
   StaffID       Int             @id @default(autoincrement())
   StaffName     String          @db.VarChar(100)
@@ -61,16 +104,30 @@ model staff {
   Modified      DateTime?       @default(now()) @db.DateTime(0)
   UserID        Int?            @unique(map: "UserID")
   meetingmember meetingmember[]
+  eventmember   eventmember[]
   user          users?          @relation(fields: [UserID], references: [Id], onDelete: Cascade, onUpdate: NoAction, map: "fk_staff_user")
 }
 
 model users {
-  Id         Int       @id @default(autoincrement())
-  Name       String?   @db.VarChar(100)
-  Email      String?   @unique(map: "Email") @db.VarChar(100)
-  Password   String    @db.VarChar(255)
-  Role       String    @db.VarChar(100)
-  CreatedAt  DateTime? @default(now()) @db.Timestamp(0)
-  ModifiedAt DateTime? @default(now()) @db.Timestamp(0)
-  staff      staff?
+  Id                 Int       @id @default(autoincrement())
+  Name               String?   @db.VarChar(100)
+  Email              String?   @unique(map: "Email") @db.VarChar(100)
+  Password           String    @db.VarChar(255)
+  Role               String    @db.VarChar(100)
+  EmailNotifications Boolean   @default(true)
+  DesktopAlerts      Boolean   @default(true)
+  CreatedAt          DateTime? @default(now()) @db.Timestamp(0)
+  ModifiedAt         DateTime? @default(now()) @db.Timestamp(0)
+  staff              staff?
+}
+
+model Notification {
+  Id        Int      @id @default(autoincrement())
+  Type      String   @db.VarChar(50)
+  Title     String   @db.VarChar(255)
+  Message   String   @db.Text
+  Time      String   @db.VarChar(50)
+  Color     String   @db.VarChar(50)
+  IsNew     Boolean  @default(true)
+  CreatedAt DateTime @default(now())
 }

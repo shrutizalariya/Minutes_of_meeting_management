@@ -1,49 +1,73 @@
 import { AddMeetingTypeAction } from "@/app/actions/AddMeetingTypeAction";
+import React from "react";
+import Link from "next/link";
+import { Tag, FileText, ArrowLeft, Plus } from "lucide-react";
 
 export default function AddMeetingType() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <form
-        action={AddMeetingTypeAction}
-        className="bg-white p-6 rounded-lg shadow-md w-96 space-y-4"
-      >
-        <h2 className="text-xl font-semibold text-gray-800">
-          Add Meeting Type
-        </h2>
+    <div className="min-h-screen w-full flex items-center justify-center p-6">
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&display=swap');
+      `}</style>
 
-        {/* Meeting Type Name */}
-        <div>
-          <label className="block text-sm text-gray-600 mb-1">
-            Meeting Type Name
-          </label>
-          <input
-            type="text"
-            name="MeetingTypeName"
-            required
-            className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
+      <div className="w-full max-w-lg bg-white rounded-3xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.08)] border border-slate-100 overflow-hidden" style={{ fontFamily: "'Sora', sans-serif" }}>
+
+        <div className="px-6 py-5 border-b border-slate-50 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-blue-50 rounded-lg text-blue-700">
+              <Plus size={18} strokeWidth={2.5} />
+            </div>
+            <h1 className="text-lg font-bold text-slate-800 tracking-tight">Add Meeting Type</h1>
+          </div>
         </div>
 
-        {/* Remarks */}
-        <div>
-          <label className="block text-sm text-gray-600 mb-1">
-            Remarks
-          </label>
-          <input
-            type="text"
-            name="Remarks"
-            className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-        </div>
+        <form action={AddMeetingTypeAction} className="p-6 space-y-5">
+          <div className="space-y-5">
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1 flex items-center gap-2">
+                <Tag size={12} className="text-blue-500" /> Meeting Type Name
+              </label>
+              <input
+                type="text"
+                name="MeetingTypeName"
+                required
+                placeholder="e.g. Weekly Sync"
+                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 transition-all outline-none text-sm text-slate-700"
+              />
+            </div>
 
-        {/* Submit */}
-        <button
-          type="submit"
-          className="w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700 transition"
-        >
-          Save
-        </button>
-      </form>
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1 flex items-center gap-2">
+                <FileText size={12} className="text-blue-500" /> Remarks
+              </label>
+              <input
+                type="text"
+                name="Remarks"
+                placeholder="Optional notes..."
+                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 transition-all outline-none text-sm text-slate-700"
+              />
+            </div>
+          </div>
+
+          <div className="pt-4 flex items-center justify-between gap-4 w-full">
+            <Link
+              href="/dashboard/admin/meetingtype"
+              className="flex-1 inline-flex items-center justify-center gap-2 bg-white hover:bg-slate-50 text-slate-600 border border-slate-200 rounded-[10px] px-4 py-[0.65rem] text-[0.82rem] font-semibold transition-all duration-200 shadow-sm hover:shadow-md active:scale-[0.97] no-underline"
+            >
+              <ArrowLeft size={15} strokeWidth={2.5} className="text-slate-400" />
+              Cancel
+            </Link>
+
+            <button
+              type="submit"
+              className="flex-1 inline-flex items-center justify-center gap-2 bg-gradient-to-br from-[#1e3a8a] to-[#1d4ed8] text-white border-none rounded-[10px] px-[1.3rem] py-[0.65rem] text-[0.82rem] font-semibold transition-all duration-200 cursor-pointer shadow-[0_4px_12px_rgba(29,78,216,0.35)] hover:-translate-y-[1px] hover:shadow-[0_6px_20px_rgba(29,78,216,0.4)] active:scale-[0.97]"
+            >
+              <Plus size={16} strokeWidth={2.5} />
+              Save Type
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 }

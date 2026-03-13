@@ -1,69 +1,408 @@
+import React, { Suspense } from "react";
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import DeleteButtonForStaff from "@/app/ui/DeleteButtonForStaff";
+import PaginationControls from "@/app/ui/PaginationControls";
+import {
+  Plus,
+  Search,
+  Edit,
+  RotateCcw,
+  Users,
+  Mail,
+  Phone,
+  Shield,
+  SlidersHorizontal,
+  User as UserIcon,
+  Eye,
+} from "lucide-react";
+
+
+import MasterCheckbox from "@/app/ui/MasterCheckbox";
+import BulkDeleteButton from "@/app/ui/BulkDeleteButtonForStaff";
+
+const PAGE_SIZE = 10;
+
+interface SearchParams {
+  keyword?: string;
+  role?: string;
+  page?: string;
+}
 
 function formatMobile(mobile?: string | null) {
   if (!mobile) return "—";
   return `${mobile.slice(0, mobile.length - 10)} ${mobile.slice(-10)}`;
 }
 
-export default async function GetAll() {
+export default async function GetAll({
+  searchParams,
+}: {
+  searchParams: Promise<SearchParams>;
+}) {
+  const params = await searchParams;
+  const keyword = params?.keyword ?? "";
+  const role = params?.role ?? "";
+  const page = Number(params?.page ?? "1");
+
+  const where: any = {};
+  const andClauses: any[] = [];
+
+  if (keyword) {
+    andClauses.push({
+      OR: [
+        { StaffName: { contains: keyword } },
+        { EmailAddress: { contains: keyword } },
+        { MobileNo: { contains: keyword } },
+      ],
+    });
+  }
+
+  if (role) {
+    andClauses.push({
+      user: { Role: role },
+    });
+  }
+
+  if (andClauses.length > 0) where.AND = andClauses;
+
+  const [totalAll, adminCount, staffCount, filteredTotal] = await Promise.all([
+    prisma.staff.count(),
+    prisma.staff.count({ where: { user: { Role: "Admin" } } }),
+    prisma.staff.count({ where: { user: { Role: "Staff" } } }),
+    prisma.staff.count({ where }),
+  ]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredTotal / PAGE_SIZE));
+  const safePage = Math.max(1, Math.min(page, totalPages));
+  const skip = (safePage - 1) * PAGE_SIZE;
+
   const rows = await prisma.staff.findMany({
-      include: {
-        user: true, 
-      },  
+    where,
+    include: { user: true },
+    orderBy: { StaffID: "desc" },
+    take: PAGE_SIZE,
+    skip: skip,
   });
 
   return (
-    <div className="min-h-screen bg-gray-100 p-6">
-      <div className="max-w-5xl mx-auto bg-white rounded-xl shadow-md p-6">
-        <h2 className="text-2xl font-semibold mb-6 text-gray-800">
-          Staff Details
-        </h2>
+    <>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
 
-        <div className="overflow-x-auto">
-          <table className="w-full border-collapse">
-            <thead>
-              <tr className="bg-gray-200 text-gray-700 text-left">
-                <th className="px-4 py-3">StaffID</th>
-                <th className="px-4 py-3">Staff Name</th>
-                <th className="px-4 py-3">Email Address</th>
-                <th className="px-4 py-3">Mobile No.</th>
-                <th className="px-4 py-3">Linked User</th>
-                <th className="px-4 py-3">Role</th>
-                <th className="px-4 py-3">Remarks</th>
-                <th className="px-4 py-3">Created</th>
-                <th className="px-4 py-3">Modified</th>
-                <th className="px-4 py-3">Details</th>
-                <th className="px-4 py-3">Edit</th>
-                <th className="px-4 py-3">Delete</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((s: any) => (
-                <tr key={s.StaffID} className="border-b hover:bg-gray-50 transition">
-                  <td className="px-4 py-3">{s.StaffID}</td>
-                  <td className="px-4 py-3 font-medium text-gray-800">{s.StaffName}</td>
-                  <td className="px-4 py-3 font-medium text-gray-800">{s.EmailAddress}</td>
-                  <td className="px-4 py-3 font-medium text-gray-800">{formatMobile(s.MobileNo)}</td>
-                  <td className="px-4 py-3">{s.user ? s.user.Name : "—"}</td>
-                  <td className="px-4 py-3">{s.user ? s.user.Role : "—"}</td>
-                  <td className="px-4 py-3 font-medium text-gray-800">{s.Remarks}</td>
-                  <td className="px-4 py-3 text-gray-600 text-sm">{s.Created ? new Date(s.Created).toLocaleDateString() : "—"}</td>
-                  <td className="px-4 py-3 text-gray-600 text-sm">{s.Modified ? new Date(s.Modified).toLocaleDateString() : "—"}</td>
-                  <td className="px-4 py-3"><Link href={`/dashboard/admin/staff/${s.StaffID}`} className="text-blue-600 hover:underline">View</Link></td>
-                  <td className="px-4 py-3"><Link href={`/dashboard/admin/staff/edit/${s.StaffID}`} className="text-green-600 hover:underline">Edit</Link></td>
-                  <td className="px-4 py-3"><DeleteButtonForStaff id={s.StaffID} /></td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        .mi {
+          max-width: 1200px;
+          margin: 0 auto;
+          padding: 1.5rem 1rem;
+          display: flex;
+          flex-direction: column;
+          gap: 1.75rem;
+          font-family: 'Sora', sans-serif;
+        }
+
+        .bc { display:flex; align-items:center; gap:.375rem; font-size:.72rem;
+              font-weight:500; color:#94a3b8; letter-spacing:.04em;
+              text-transform:uppercase; }
+        .bc a { color:#94a3b8; text-decoration:none; transition:color .15s; }
+        .bc a:hover { color:#1d4ed8; }
+        .bc-sep { color:#cbd5e1; }
+
+        .hrow { display:flex; align-items:center; justify-content:space-between;
+                flex-wrap:wrap; gap:1rem; margin-top:.25rem; }
+        .ptitle { font-size:1.65rem; font-weight:700; color:#0f172a;
+                  letter-spacing:-.03em; line-height:1.2; margin:0; }
+        .ptitle span { display:block; font-size:.8rem; font-weight:500;
+                       color:#64748b; letter-spacing:.01em; margin-top:.2rem; }
+
+        .btn-add {
+          display:inline-flex; align-items:center; gap:.5rem;
+          background:linear-gradient(135deg,#1e3a8a 0%,#1d4ed8 100%);
+          color:#fff; border:none; border-radius:10px;
+          padding:.65rem 1.3rem; font-size:.82rem; font-weight:600;
+          cursor:pointer; text-decoration:none;
+          box-shadow:0 2px 8px rgba(29,78,216,.35);
+          transition:all .2s;
+        }
+        .btn-add:hover { transform:translateY(-1px); box-shadow:0 6px 20px rgba(29,78,216,.4); }
+
+        .btn-search {
+          display:inline-flex; align-items:center; gap:.45rem;
+          background:#0f172a; color:#fff; border:none; border-radius:9px;
+          padding:.6rem 1.2rem; font-size:.8rem; font-weight:700;
+          cursor:pointer; transition:all .15s; font-family:'Sora',sans-serif;
+        }
+        .btn-search:hover { background:#1e293b; }
+
+        .btn-reset {
+          display:inline-flex; align-items:center; gap:.45rem;
+          background:transparent; color:#64748b;
+          border:1.5px solid #e2e8f0; border-radius:9px;
+          padding:.6rem 1.2rem; font-size:.8rem; font-weight:600;
+          text-decoration:none; transition:all .15s; font-family:'Sora',sans-serif;
+        }
+        .btn-reset:hover { background:#f8fafc; color:#475569; }
+
+        .ss { display:grid; grid-template-columns:repeat(3, 1fr); gap:1rem; }
+        .sc { background:#fff; border:1px solid #e2e8f0; border-radius:14px;
+              padding:1.15rem 1.4rem; display:flex; align-items:center; gap:1rem;
+              box-shadow:0 1px 3px rgba(0,0,0,.04); transition:box-shadow .2s; }
+        .sc:hover { box-shadow:0 4px 16px rgba(0,0,0,.07); }
+        .si { width:42px; height:42px; border-radius:10px;
+              display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+        .si.blue  { background:#eff6ff; color:#1d4ed8; }
+        .si.green { background:#f0fdf4; color:#16a34a; }
+        .sl { font-size:.72rem; font-weight:600; color:#94a3b8; text-transform:uppercase; letter-spacing:.06em; }
+        .sv { font-size:1.45rem; font-weight:700; color:#0f172a; font-family:'JetBrains Mono',monospace; line-height:1.1; }
+
+        .fc { background:#fff; border:1px solid #e2e8f0; border-radius:16px; box-shadow:0 1px 4px rgba(0,0,0,.04); overflow:hidden; }
+        .fh { padding:1.1rem 1.6rem; border-bottom:1px solid #f1f5f9; background:#fafbfe; display:flex; align-items:center; gap:.75rem; }
+        .fh-icon { width:32px; height:32px; border-radius:8px; background:linear-gradient(135deg,#eff6ff,#dbeafe); display:flex; align-items:center; justify-content:center; color:#1d4ed8; flex-shrink:0; }
+        .fh h2 { font-size:.88rem; font-weight:700; color:#1e293b; margin:0; }
+        .fb { padding:1.5rem 1.6rem; display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:1.25rem; align-items:end; }
+        .fctl { background:#f8fafc; border:1.5px solid #e2e8f0; border-radius:9px; padding:.6rem .9rem; font-size:.82rem; font-family:'Sora',sans-serif; color:#1e293b; width:100%; outline:none; transition:all .15s; }
+        .fctl:focus { border-color:#3b82f6; background:#fff; box-shadow:0 0 0 3px rgba(59,130,246,.1); }
+        .fctl.hi { padding-left:2.25rem; }
+        .iw { position:relative; }
+        .ii { position:absolute; left:.75rem; top:50%; transform:translateY(-50%); color:#94a3b8; pointer-events:none; }
+        .fa { padding:1rem 1.6rem 1.4rem; border-top:1px solid #f1f5f9; display:flex; justify-content:space-between; align-items:center; gap:.75rem; flex-wrap:wrap; }
+        .abg { display:flex; gap:.75rem; }
+
+        .tc { background:#fff; border:1px solid #e2e8f0; border-radius:16px; box-shadow:0 1px 4px rgba(0,0,0,.04); overflow:hidden; }
+        .th { padding:1rem 1.6rem; border-bottom:1px solid #f1f5f9; background:#fafbfe; display:flex; align-items:center; justify-content:space-between; }
+        .th h3 { font-size:.88rem; font-weight:700; color:#1e293b; margin:0; }
+        .rb { background:linear-gradient(135deg,#eff6ff,#dbeafe); color:#1d4ed8; font-size:.68rem; font-weight:800; padding:.25rem .7rem; border-radius:20px; letter-spacing:.05em; font-family:'JetBrains Mono',monospace; }
+
+        table { width:100%; border-collapse:collapse; }
+        thead tr { background:#f8fafc; }
+        th { font-size:.67rem; font-weight:700; color:#94a3b8; text-transform:uppercase; letter-spacing:.1em; padding:.9rem 1.6rem; border-bottom:1px solid #f1f5f9; text-align:left; white-space:nowrap; }
+        th.r { text-align:right; }
+        tbody tr { border-bottom:1px solid #f8fafc; transition:background .15s; }
+        tbody tr:hover { background:#fafcff; }
+        td { padding:1rem 1.6rem; vertical-align:middle; }
+        td.r { text-align:right; }
+
+        .ri { display:flex; align-items:center; gap:.9rem; }
+        .rav { width:40px; height:40px; background:linear-gradient(135deg,#f1f5f9,#e2e8f0); border-radius:10px; display:flex; align-items:center; justify-content:center; color:#94a3b8; flex-shrink:0; transition:all .2s; }
+        tbody tr:hover .rav { background:linear-gradient(135deg,#eff6ff,#dbeafe); color:#1d4ed8; }
+        .rt { font-size:.85rem; font-weight:600; color:#1e293b; line-height:1.3; transition:color .15s; }
+        tbody tr:hover .rt { color:#1d4ed8; }
+        .rm { font-size:.7rem; color:#94a3b8; margin-top:.3rem; font-weight:500; display:flex; align-items:center; gap:.4rem; }
+        .tbadge { background:#f1f5f9; color:#475569; font-size:.68rem; font-weight:600; padding:.2rem .55rem; border-radius:6px; }
+
+        .ar { display:flex; align-items:center; justify-content:flex-end; gap:.35rem; }
+        .bti { width:34px; height:34px; border-radius:8px; display:flex; align-items:center; justify-content:center; background:transparent; border:none; cursor:pointer; text-decoration:none; transition:all .15s; }
+        .bti.view { color:#1d4ed8; }
+        .bti.view:hover { background:#eff6ff; color:#1e40af; }
+        .bti.edit { color:#16a34a; }
+        .bti.edit:hover { background:#f0fdf4; color:#15803d; }
+        .bti.del { color:#94a3b8; }
+        .bti.del:hover { background:#fef2f2; color:#dc2626; }
+        .adiv { width:1px; height:16px; background:#f1f5f9; }
+
+        .tf { padding:.9rem 1.6rem; border-top:1px solid #f1f5f9; background:#fafbfe; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:.75rem; }
+        .pi { font-size:.72rem; font-weight:600; color:#94a3b8; }
+        
+        .chk-cell { width:40px; padding-right:0; }
+        tbody .chk-cell input[type="checkbox"] { width:16px; height:16px; accent-color:#1d4ed8; cursor:pointer; opacity:0; transition:opacity .2s; }
+        thead .chk-cell input[type="checkbox"] { width:16px; height:16px; accent-color:#1d4ed8; cursor:pointer; }
+        tbody tr:hover .chk-cell input[type="checkbox"],
+        tbody .chk-cell input[type="checkbox"]:checked { opacity:1; }
+
+        .es { padding:4rem 2rem; text-align:center; }
+        .es-icon { width:64px; height:64px; background:#f1f5f9; border-radius:16px; display:flex; align-items:center; justify-content:center; margin:0 auto 1rem; color:#94a3b8; }
+        .es h4 { font-size:1rem; font-weight:700; color:#1e293b; margin:0 0 .4rem; }
+        .es p { font-size:.82rem; color:#94a3b8; margin:0; }
+      `}</style>
+
+      <div className="mi">
+        <div>
+          <nav className="bc">
+            <Link href="/">Home</Link>
+            <span className="bc-sep">/</span>
+            <Link href="/dashboard/admin">Dashboard</Link>
+            <span className="bc-sep">/</span>
+            <span style={{ color: "#475569" }}>Staff</span>
+          </nav>
+
+          <div className="hrow">
+            <h1 className="ptitle">
+              Staff Management
+              <span>Manage your organization's staff members</span>
+            </h1>
+            <Link href="/dashboard/admin/staff/add" className="btn-add">
+              <Plus size={16} />
+              Add Staff Member
+            </Link>
+          </div>
         </div>
 
-        {rows.length === 0 && (
-          <p className="text-center text-gray-500 mt-6">No staff found.</p>
-        )}
+        <div className="ss" style={{ gridTemplateColumns: "repeat(3, 1fr)" }}>
+          <div className="sc">
+            <div className="si blue"><Users size={20} /></div>
+            <div>
+              <div className="sl">Total Staff</div>
+              <div className="sv">{totalAll}</div>
+            </div>
+          </div>
+          <div className="sc">
+            <div className="si blue" style={{ background: '#f8fafc', color: '#1d4ed8' }}><Shield size={20} /></div>
+            <div>
+              <div className="sl">Admins</div>
+              <div className="sv">{adminCount}</div>
+            </div>
+          </div>
+          <div className="sc">
+            <div className="si blue" style={{ background: '#f0fdf4', color: '#16a34a' }}><UserIcon size={20} /></div>
+            <div>
+              <div className="sl">Regular Staff</div>
+              <div className="sv">{staffCount}</div>
+            </div>
+          </div>
+        </div>
+
+        <div className="fc">
+          <div className="fh">
+            <div className="fh-icon"><SlidersHorizontal size={16} /></div>
+            <h2>Search &amp; Filter</h2>
+          </div>
+          <form method="GET">
+            <div className="fb">
+              <div className="fg">
+                <div className="iw">
+                  <Search className="ii" size={14} />
+                  <input
+                    name="keyword"
+                    defaultValue={keyword}
+                    type="text"
+                    placeholder="Search by name or email…"
+                    className="fctl hi"
+                  />
+                </div>
+              </div>
+              <div className="fg">
+                <select name="role" defaultValue={role} className="fctl">
+                  <option value="">All Roles</option>
+                  <option value="Admin">Admin</option>
+                  <option value="Staff">Staff</option>
+                </select>
+              </div>
+            </div>
+            <div className="fa" style={{ justifyContent: 'space-between', alignItems: 'center' }}>
+              <div className="abg" style={{ display: 'flex', gap: '0.75rem' }}>
+                <button type="submit" className="btn-search">
+                  <Search size={14} /> Search
+                </button>
+                <Link href="/dashboard/admin/staff" className="btn-reset">
+                  <RotateCcw size={14} /> Reset
+                </Link>
+              </div>
+              <BulkDeleteButton />
+            </div>
+          </form>
+        </div>
+
+        <div className="tc">
+          <div className="th">
+            <h3>Staff List</h3>
+            <span className="rb">{filteredTotal} Records</span>
+          </div>
+          <div style={{ overflowX: "auto" }}>
+            <table>
+              <thead>
+                <tr>
+                  <th className="chk-cell">
+                    <MasterCheckbox />
+                  </th>
+                  <th>Staff Info</th>
+                  <th>Contact</th>
+                  <th>Role & Account</th>
+                  <th style={{ textAlign: "right" }}>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.length === 0 ? (
+                  <tr>
+                    <td colSpan={5}>
+                      <div className="es">
+                        <div className="es-icon"><Users size={28} /></div>
+                        <h4>No staff members found</h4>
+                        <p>Try adjusting your search query or role filter.</p>
+                      </div>
+                    </td>
+                  </tr>
+                ) : (
+                  rows.map((s) => (
+                    <tr key={s.StaffID}>
+                      <td className="chk-cell">
+                        <input
+                          type="checkbox"
+                          className="row-checkbox"
+                          value={s.StaffID}
+                        />
+                      </td>
+                      <td>
+                        <div className="ri">
+                          <div className="rav">
+                            <UserIcon size={18} />
+                          </div>
+                          <div>
+                            <div className="rt">{s.StaffName}</div>
+                            <div className="rm">
+                              ID: #{s.StaffID} &nbsp;·&nbsp; Joined {new Date(s.Created || "").toLocaleDateString()}
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+                      <td>
+                        <div className="rm" title="Email"><Mail size={12} /> {s.EmailAddress}</div>
+                        <div className="rm" title="Mobile"><Phone size={12} /> {formatMobile(s.MobileNo)}</div>
+                      </td>
+                      <td>
+                        <div className="rm"><Shield size={12} /> {s.user?.Role || "No Role"}</div>
+                        <div className="rm"><UserIcon size={12} /> {s.user?.Name || "Not Linked"}</div>
+                      </td>
+                      <td>
+                        <div className="ar">
+                          <Link
+                            href={`/dashboard/admin/staff/${s.StaffID}`}
+                            className="bti view"
+                            title="View"
+                          >
+                            <Eye size={17} />
+                          </Link>
+                          <div className="adiv" />
+                          <Link
+                            href={`/dashboard/admin/staff/edit/${s.StaffID}`}
+                            className="bti edit"
+                            title="Edit"
+                          >
+                            <Edit size={17} />
+                          </Link>
+                          <div className="adiv" />
+                          <div className="bti del">
+                            <DeleteButtonForStaff id={s.StaffID} />
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+          <div className="tf">
+            <p className="pi">
+              Page {safePage} of {totalPages} &nbsp;·&nbsp; {filteredTotal} total records
+            </p>
+            <Suspense fallback={<div style={{ height: 32 }} />}>
+              <PaginationControls
+                totalRecords={filteredTotal}
+                pageSize={PAGE_SIZE}
+                currentPage={safePage}
+              />
+            </Suspense>
+          </div>
+        </div>
       </div>
-    </div>
+    </>
   );
 }

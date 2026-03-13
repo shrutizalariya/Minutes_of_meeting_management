@@ -13,7 +13,7 @@ export default function RootLayout({
       <body
         className="Dashboard"
       >
-        {children}
+        <Providers>{children}</Providers>
       </body>
     </html>
   );
