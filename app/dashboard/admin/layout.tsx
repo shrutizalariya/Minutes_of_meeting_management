@@ -32,25 +32,34 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <SidebarLink icon={<LayoutDashboard size={18} />} label="Overview" active />
           </Link>
 
-          <Link href="/meetingtype">
+          <Link href="/dashboard/admin/meetingtype">
             <SidebarLink icon={<Layers size={18} />} label="Meeting Types" />
           </Link>
 
-          <Link href="/meetings">
+          <Link href="/dashboard/admin/meetings">
             <SidebarLink icon={<FileText size={18} />} label="Meetings" />
           </Link>
 
-          <Link href="/meetingmember">
+          <Link href="/dashboard/admin/meetingmember">
             <SidebarLink icon={<ClipboardCheck size={18} />} label="Meeting Members" />
           </Link>
 
-          <Link href="/staff">
+          <Link href="/dashboard/admin/staff">
             <SidebarLink icon={<Users size={18} />} label="Staff Directory" />
+          </Link>
+
+          <Link href="/dashboard/admin/calendar">
+            <SidebarLink icon={<Layers size={18} />} label="Calendar" />
+          </Link>
+
+          <Link href="/dashboard/admin/staffAttendance">
+            <SidebarLink icon={<Layers size={18} />} label="Staff Attendance" />
           </Link>
 
           <Link href="/settings">
             <SidebarLink icon={<Settings size={18} />} label="Settings" />
           </Link>
+
 
         </nav>
 

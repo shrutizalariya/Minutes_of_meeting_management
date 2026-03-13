@@ -113,7 +113,7 @@ export async function EditMeetingAction(formData: FormData) {
     }
   });
 
-  revalidatePath("/meetings");
+  revalidatePath("/dashboard/admin/meetings");
 
-  redirect("/meetings");
+  redirect("/dashboard/admin/meetings");
 }

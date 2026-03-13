@@ -30,8 +30,8 @@ async function EditMeetingTypeAction(formData: FormData) {
     },
   });
 
-  revalidatePath("/meetingtype");
-  redirect("/meetingtype");
+  revalidatePath("/dashboard/admin/meetingtype");
+  redirect("/dashboard/admin/meetingtype");
 }
 
 export { EditMeetingTypeAction };

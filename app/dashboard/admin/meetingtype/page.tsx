@@ -1,7 +1,7 @@
 import React from "react";
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
-import DeleteButton from "../ui/DeleteButton";
+import DeleteButton from "@/app/ui/DeleteButton";
 
 export default async function GetAll() {
   const rows = await prisma.meetingtype.findMany();

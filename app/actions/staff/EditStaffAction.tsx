@@ -36,6 +36,6 @@ export async function EditStaffAction(formData: FormData) {
     },
   });
 
-  revalidatePath("/staff");
-  redirect("/staff");
+  revalidatePath("/dashboard/admin/staff");
+  redirect("/dashboard/admin/staff");
 }

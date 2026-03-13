@@ -49,6 +49,6 @@ export async function AddMeetingAction(formData: FormData) {
     },
   });
 
-  revalidatePath("/meetings");
-  redirect("/meetings");
+  revalidatePath("/dashboard/admin/meetings");
+  redirect("/dashboard/admin/meetings");
 }

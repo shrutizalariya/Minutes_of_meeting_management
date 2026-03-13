@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
-import DeleteButtonForStaff from "../ui/DeleteButtonForStaff";
+import DeleteButtonForStaff from "@/app/ui/DeleteButtonForStaff";
 
 function formatMobile(mobile?: string | null) {
   if (!mobile) return "—";
@@ -51,8 +51,8 @@ export default async function GetAll() {
                   <td className="px-4 py-3 font-medium text-gray-800">{s.Remarks}</td>
                   <td className="px-4 py-3 text-gray-600 text-sm">{s.Created ? new Date(s.Created).toLocaleDateString() : "—"}</td>
                   <td className="px-4 py-3 text-gray-600 text-sm">{s.Modified ? new Date(s.Modified).toLocaleDateString() : "—"}</td>
-                  <td className="px-4 py-3"><Link href={`/staff/${s.StaffID}`} className="text-blue-600 hover:underline">View</Link></td>
-                  <td className="px-4 py-3"><Link href={`/staff/edit/${s.StaffID}`} className="text-green-600 hover:underline">Edit</Link></td>
+                  <td className="px-4 py-3"><Link href={`/dashboard/admin/staff/${s.StaffID}`} className="text-blue-600 hover:underline">View</Link></td>
+                  <td className="px-4 py-3"><Link href={`/dashboard/admin/staff/edit/${s.StaffID}`} className="text-green-600 hover:underline">Edit</Link></td>
                   <td className="px-4 py-3"><DeleteButtonForStaff id={s.StaffID} /></td>
                 </tr>
               ))}

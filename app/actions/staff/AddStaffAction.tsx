@@ -105,6 +105,6 @@ export async function AddStaffAction(formData: FormData) {
   });
 
   // ✅ Step 4: Refresh and redirect
-  revalidatePath("/staff");
-  redirect("/staff");
+  revalidatePath("/dashboard/admin/staff");
+  redirect("/dashboard/admin/staff");
 }

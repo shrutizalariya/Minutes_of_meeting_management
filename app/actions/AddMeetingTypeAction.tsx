@@ -10,8 +10,8 @@ const MeetingTypeName = formData.get("MeetingTypeName") as string;
 const Remarks = formData.get("Remarks") as string;
 const data = {MeetingTypeName , Remarks};
 await prisma.meetingtype.create({data});
-revalidatePath("/meetingtype");
-redirect("/meetingtype")
+revalidatePath("/dashboard/admin/meetingtype");
+redirect("/dashboard/admin/meetingtype")
 }
 
 export {AddMeetingTypeAction};

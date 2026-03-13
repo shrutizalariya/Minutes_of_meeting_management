@@ -6,8 +6,8 @@ import { redirect } from "next/navigation";
 
 async function DeleteMeetingTypeAction(id:number){
     await prisma.meetingtype.delete({where:{MeetingTypeID:id}});
-    revalidatePath("/meetingtype");
-    redirect("/meetingtype");
+    revalidatePath("/dashboard/admin/meetingtype");
+    redirect("/dashboard/admin/meetingtype");
 }
 
 export {DeleteMeetingTypeAction};

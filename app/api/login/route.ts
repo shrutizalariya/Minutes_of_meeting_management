@@ -210,6 +210,8 @@ export async function POST(req: Request) {
     });
 
     response.cookies.set("token", token, {
+      // name: "jwt",
+      // value:token,
       httpOnly: true,
       path: "/",
       maxAge: 60 * 60,
@@ -217,6 +219,7 @@ export async function POST(req: Request) {
     });
 
     return response;
+    
   } catch (error) {
     console.log(error);
 

@@ -1,7 +1,7 @@
 import React from "react";
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
-import DeleteButtonForMeetingMember from "../ui/DeleteButtonForMeetingMember";
+import DeleteButtonForMeetingMember from "@/app/ui/DeleteButtonForMeetingMember";
 
 export default async function GetAll() {
   const rows = await prisma.meetingmember.findMany({
@@ -101,7 +101,7 @@ export default async function GetAll() {
                   {/* View */}
                   <td className="px-4 py-3">
                     <Link
-                      href={`/meetingmember/${mm.MeetingMemberID}`}
+                      href={`/dashboard/admin/meetingmember/${mm.MeetingMemberID}`}
                       className="text-blue-600 hover:underline"
                     >
                       View
@@ -111,7 +111,7 @@ export default async function GetAll() {
                   {/* Edit */}
                   <td className="px-4 py-3">
                     <Link
-                      href={`/meetingmember/edit/${mm.MeetingMemberID}`}
+                      href={`/dashboard/admin/meetingmember/edit/${mm.MeetingMemberID}`}
                       className="text-green-600 hover:underline"
                     >
                       Edit

@@ -9,9 +9,6 @@ import RecentMeetings from "./RecentMeetings";
 import CriticalActionSidebarServer from "@/app/components/admindashboard/CriticalActionSidebarServer";
 import MeetingChart from "@/app/components/admindashboard/MeetingChart";
 import { getMeetingStatusStats } from "@/lib/admin/meetingStatus";
-import MeetingCalendar from "@/app/components/admindashboard/MeetingCalendar";
-import { getMeetingsForCalendar } from "@/lib/admin/meetingCalendar";
-import StaffAttendanceSummary from "@/app/components/admindashboard/StaffAttendanceSummary";
 
 export type Meeting = {
   MeetingID: number;
@@ -26,7 +23,6 @@ export default async function DashboardPage() {
   const totalMeetings = await prisma.meetings.count();
   const totalStaff = await prisma.staff.count();
   const chartData = await getMeetingStatusStats();
-  const meetings = await getMeetingsForCalendar();
 
   const pendingMeetings = await prisma.meetings.count({
     where:{Status:"Scheduled"}
@@ -47,12 +43,12 @@ export default async function DashboardPage() {
           <p className="text-slate-500 text-sm mt-1">Manage meetings, track minutes, and assign action items.</p>
         </div>
         <button className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-xl text-sm font-bold shadow-lg shadow-blue-600/20 hover:bg-blue-700 transition-all">
-          <Plus size={18} strokeWidth={3} /> <Link href="/meetings/add">Schedule Meeting</Link>
+          <Plus size={18} strokeWidth={3} /> <Link href="/dashboard/admin/meetings/add">Schedule Meeting</Link>
         </button>
       </div>
 
 {/* Dashboard Section */}
-<div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
 
   {/* LEFT SIDE – KPI Cards */}
   <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-4 gap-4">
@@ -92,11 +88,10 @@ export default async function DashboardPage() {
   </div>
 
   {/* RIGHT SIDE – Chart */}
-  <div className="lg:col-span-2 bg-white rounded-lg shadow p-4">
+  <div className="lg:col-span-1 bg-white rounded-lg shadow p-4">
     <MeetingChart data={chartData} />
   </div>
 
-</div>
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-10">
         {/* Recent Meetings Table - Maps to Meeting model */}
          <RecentMeetings />
@@ -108,15 +103,6 @@ export default async function DashboardPage() {
             <CriticalActionSidebarServer />
          
         </div>
-
-  <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-slate-800">Admin Dashboard</h1>
-      <MeetingCalendar meetings={meetings} />
-    </div>
-    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-      {/* Other KPI cards */}
-      <StaffAttendanceSummary />
-    </div>
       </div>
   );
 }
