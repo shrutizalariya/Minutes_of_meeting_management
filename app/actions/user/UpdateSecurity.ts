@@ -3,6 +3,8 @@
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 
+import bcrypt from "bcryptjs";
+
 export async function updateSecurity(formData: FormData) {
     const id = Number(formData.get("id"));
     const currentPassword = formData.get("currentPassword")?.toString();
@@ -23,14 +25,23 @@ export async function updateSecurity(formData: FormData) {
             where: { Id: id }
         });
 
-        if (!user || user.Password !== currentPassword) {
+        if (!user) {
+            return { success: false, error: "User not found." };
+        }
+
+        // Verify current password with bcrypt
+        const isCorrect = await bcrypt.compare(currentPassword, user.Password);
+        if (!isCorrect) {
             return { success: false, error: "Incorrect current password." };
         }
 
-        // Update password (in a real app, hash this!)
+        // Hash new password
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+        // Update password
         await prisma.users.update({
             where: { Id: id },
-            data: { Password: newPassword }
+            data: { Password: hashedPassword }
         });
 
         revalidatePath("/dashboard/admin/settings");

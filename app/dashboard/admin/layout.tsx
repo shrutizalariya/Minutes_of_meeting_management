@@ -9,6 +9,7 @@ import {
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import LogoutButton from "@/app/ui/LogoutButton";
+import NotificationBellWrapper from "@/app/components/admindashboard/NotificationBellWrapper";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const [search, setSearch] = useState("");
@@ -135,10 +136,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </form>
 
           <div className="flex items-center gap-4">
-            <Link href="/dashboard/admin/notifications" className="p-2.5 text-slate-500 hover:bg-slate-100 rounded-xl relative transition-all active:scale-95 no-underline">
-              <Bell size={20} />
-              <span className="absolute top-3 right-3 h-2 w-2 bg-red-500 rounded-full border-2 border-white shadow-sm" />
-            </Link>
+            <NotificationBellWrapper />
             <div className="h-8 w-[1px] bg-slate-200 mx-2" />
             <div className="flex items-center gap-3 px-1 py-1 pr-3 bg-slate-50 rounded-full border border-slate-100">
               <div className="h-8 w-8 rounded-full bg-white shadow-sm flex items-center justify-center text-[10px] font-black text-blue-600">AD</div>

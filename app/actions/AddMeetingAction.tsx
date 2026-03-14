@@ -39,7 +39,7 @@ export async function AddMeetingAction(formData: FormData) {
     DocumentPath = `/uploads/meeting_docs/${file.name}`;
   }
 
-  await prisma.meetings.create({
+  const meeting = await prisma.meetings.create({
     data: {
       MeetingDate: new Date(MeetingDate),
       MeetingTypeID,
@@ -48,6 +48,20 @@ export async function AddMeetingAction(formData: FormData) {
       IsCancelled: false, // default
     },
   });
+
+  // Create notification for the new meeting
+  await prisma.notification.create({
+    data: {
+      Type: "meeting",
+      Title: "New Meeting Scheduled",
+      Message: `Meeting: ${MeetingDescription || "Untitled"} set for ${new Date(MeetingDate).toLocaleDateString()}`,
+      Time: "Just now",
+      Color: "blue",
+      IsNew: true
+    }
+  });
+
+  revalidatePath("/dashboard/admin/notifications");
 
   revalidatePath("/dashboard/admin/meetings");
   redirect("/dashboard/admin/meetings");

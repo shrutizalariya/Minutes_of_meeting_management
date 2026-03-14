@@ -1,42 +1,35 @@
+// app/dashboard/staff/layout.tsx
 import React from "react";
 import { cookies } from "next/headers";
-import { verifyJwt } from "@/lib/jwt";
-import Link from "next/link";
+import { verifyToken } from "@/lib/auth";
+import NotificationBell from "./NotificationBell";
+import SidebarNavigation from "./SidebarNavigation";
+import SearchForm from "./SearchForm";
 
 import {
   CheckSquare,
-  Calendar,
   LogOut,
-  Bell,
-  LayoutDashboard,
-  Clock,
-  ChevronRight,
-  Search,
-  Command,
 } from "lucide-react";
-import next from "next";
 
 export default async function StaffLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const cookieStore = cookies();
-  const token = (await cookieStore).get("token");
+  const cookieStore = await cookies();
+  const token = cookieStore.get("token");
 
   let userName = "User";
   let initial = "U";
+  let userId = 0;
 
   if (token) {
-    const payload: any = verifyJwt(token.value);
+    const payload: any = await verifyToken(token.value);
 
     if (payload?.email) {
+      userId = payload.id;
       const email = payload.email;
-
-      // extract name before @
       const namePart = email.split("@")[0];
-
-      // remove numbers and split by . or _
       const formattedName = namePart
         .replace(/[0-9]/g, "")
         .split(/[._]/)
@@ -68,14 +61,7 @@ export default async function StaffLayout({
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 px-4 space-y-1">
-          <SidebarLink icon={<LayoutDashboard size={18} />} label="My Workspace" active />
-          <Link href="/dashboard/staff/meetings">
-              <SidebarLink icon={<Calendar size={18} />} label="My Meetings" />
-          </Link>
-          {/* <SidebarLink icon={<CheckSquare size={18} />} label="My Actions" />
-          <SidebarLink icon={<Clock size={18} />} label="Attendance" /> */}
-        </nav>
+        <SidebarNavigation />
 
         {/* User Info */}
         <div className="p-6 border-t border-slate-800">
@@ -101,9 +87,11 @@ export default async function StaffLayout({
           </div>
 
           {/* Logout */}
-          <button className="flex items-center gap-3 text-slate-400 hover:text-white transition-colors text-sm font-medium w-full px-4">
-            <LogOut size={18} /> Sign Out
-          </button>
+          <form action="/api/logout" method="POST">
+            <button type="submit" className="flex items-center gap-3 text-slate-400 hover:text-white transition-colors text-sm font-medium w-full px-4 bg-transparent border-none cursor-pointer">
+              <LogOut size={18} /> Sign Out
+            </button>
+          </form>
 
         </div>
 
@@ -116,29 +104,12 @@ export default async function StaffLayout({
         <header className="h-20 bg-white/80 backdrop-blur-md border-b border-slate-200 sticky top-0 z-40 px-10 flex items-center justify-between">
 
           {/* Search */}
-          <div className="relative w-96 group">
-            <Search
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-emerald-600"
-              size={16}
-            />
-
-            <input
-              className="w-full bg-slate-100 border-none rounded-xl py-2.5 pl-10 pr-4 text-sm focus:ring-2 focus:ring-emerald-500/20 outline-none"
-              placeholder="Search meetings or tasks..."
-            />
-
-            <div className="absolute right-3 top-1/2 -translate-y-1/2 flex gap-1 items-center bg-white border border-slate-200 px-1.5 py-0.5 rounded text-[10px] font-bold text-slate-400">
-              <Command size={10} /> K
-            </div>
-          </div>
+          <SearchForm />
 
           {/* Notification */}
           <div className="flex items-center gap-5">
 
-            <button className="relative p-2.5 text-slate-500 hover:bg-slate-100 rounded-xl transition-all">
-              <Bell size={20} />
-              <span className="absolute top-2.5 right-2.5 h-2 w-2 bg-emerald-500 rounded-full border-2 border-white"></span>
-            </button>
+            <NotificationBell userId={userId} />
 
           </div>
 
@@ -151,32 +122,5 @@ export default async function StaffLayout({
 
       </div>
     </div>
-  );
-}
-
-function SidebarLink({
-  icon,
-  label,
-  active = false,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  active?: boolean;
-}) {
-  return (
-    <button
-      className={`w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all ${
-        active
-          ? "bg-emerald-600 text-white shadow-md"
-          : "text-slate-400 hover:bg-slate-800 hover:text-slate-100"
-      }`}
-    >
-      <div className="flex items-center gap-3 font-semibold text-sm">
-        {icon}
-        {label}
-      </div>
-
-      {active && <ChevronRight size={14} className="opacity-60" />}
-    </button>
   );
 }

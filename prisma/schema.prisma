@@ -119,6 +119,7 @@ model users {
   CreatedAt          DateTime? @default(now()) @db.Timestamp(0)
   ModifiedAt         DateTime? @default(now()) @db.Timestamp(0)
   staff              staff?
+  notifications      Notification[]
 }
 
 model Notification {
@@ -130,4 +131,8 @@ model Notification {
   Color     String   @db.VarChar(50)
   IsNew     Boolean  @default(true)
   CreatedAt DateTime @default(now())
+  UserID    Int?
+  user      users?   @relation(fields: [UserID], references: [Id], onDelete: Cascade)
+
+  @@index([UserID])
 }

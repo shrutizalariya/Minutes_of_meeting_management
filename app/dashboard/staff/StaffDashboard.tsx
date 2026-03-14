@@ -13,6 +13,7 @@ export type Meeting = {
   MeetingDate: string;
   MeetingDescription?: string;
   meetingtype?: MeetingType;
+  category?: "Meeting" | "Event";
 };
 
 export type MeetingMember = {
@@ -23,6 +24,7 @@ export type MeetingMember = {
   Created?: Date;
   Modified?: Date;
   meetings?: Meeting;
+  category?: "Meeting" | "Event";
 };
 
 export type StaffDashboardData = {
@@ -51,16 +53,16 @@ export default function StaffDashboard({
         <div>
           <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">Personal Workspace</h1>
           <p className="text-slate-500 text-sm mt-1 font-medium italic">
-            You have {tasks.length} action items requiring attention today.
+            Welcome back! You have {tasks.length} recent assignments requiring attention.
           </p>
         </div>
       </div>
 
       {/* KPI Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <KPICard label="Assigned Actions" value={assignedActions} icon={<CheckCircle className="text-emerald-600" />} />
-        <KPICard label="Pending Deadline" value={pendingDeadline} icon={<Clock className="text-amber-600" />} />
-        <KPICard label="Meetings This Week" value={meetingsThisWeek} icon={<Calendar className="text-blue-600" />} />
+        <KPICard label="Total Assignments" value={assignedActions} icon={<CheckCircle className="text-emerald-600" />} />
+        <KPICard label="Pending (Scheduled)" value={pendingDeadline} icon={<Clock className="text-amber-600" />} />
+        <KPICard label="Schedule This Week" value={meetingsThisWeek} icon={<Calendar className="text-blue-600" />} />
         <KPICard label="Attendance Rate" value={`${attendanceRate}%`} icon={<UserCheck className="text-indigo-600" />} />
       </div>
 
@@ -68,30 +70,34 @@ export default function StaffDashboard({
         {/* Tasks Table */}
         <div className="xl:col-span-2 bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
           <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
-            <h2 className="font-extrabold text-slate-800 uppercase tracking-widest text-xs">Assigned Action Items</h2>
-            <button className="text-xs font-bold text-emerald-600 hover:underline">View Task Board</button>
+            <h2 className="font-extrabold text-slate-800 uppercase tracking-widest text-xs">Recent Assignments</h2>
+            <Link href="/dashboard/staff/meetings" className="text-xs font-bold text-emerald-600 hover:underline no-underline">View Full Schedule</Link>
           </div>
 
           <div className="overflow-x-auto">
             <table className="w-full text-left">
               <thead>
                 <tr className="text-[11px] font-black text-slate-400 uppercase tracking-wider border-b border-slate-100">
-                  <th className="px-8 py-5">Task Description</th>
-                  <th className="px-6 py-5">Origin Meeting</th>
-                  <th className="px-6 py-5">Deadline</th>
+                  <th className="px-8 py-5">Assignment</th>
+                  <th className="px-6 py-5">Category</th>
+                  <th className="px-6 py-5">Date</th>
                   <th className="px-8 py-5 text-right">Action</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
-                {tasks.map((task) => (
+                {tasks.length > 0 ? tasks.map((task) => (
                   <StaffTaskRow
-                    key={task.MeetingMemberID}
+                    key={`${task.category}-${task.MeetingMemberID}`}
                     description={task.meetings?.MeetingDescription || "No description"}
-                    meeting={task.meetings?.MeetingDescription || "Meeting"}
-                    deadline={new Date(task.meetings?.MeetingDate || "").toDateString()}
+                    category={task.category || "Meeting"}
+                    deadline={new Date(task.meetings?.MeetingDate || "").toLocaleDateString()}
                     priority={task.meetings?.MeetingDate && new Date(task.meetings.MeetingDate) < new Date()}
                   />
-                ))}
+                )) : (
+                  <tr>
+                    <td colSpan={4} className="px-8 py-10 text-center text-slate-400 font-medium">No recent assignments found.</td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>
@@ -99,17 +105,21 @@ export default function StaffDashboard({
 
         {/* Schedule Sidebar */}
         <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
-          <h2 className="font-bold text-slate-800 text-sm uppercase tracking-wider mb-6">Upcoming Schedule</h2>
+          <h2 className="font-bold text-slate-800 text-sm uppercase tracking-wider mb-6">Upcoming Agenda</h2>
           <div className="space-y-4">
-            {schedules.map((meeting, index) => (
+            {schedules.length > 0 ? schedules.map((item, index) => (
               <MiniScheduleCard
-                key={meeting.MeetingID}
-                title={meeting.MeetingDescription || "No Title"}
-                time={new Date(meeting.MeetingDate).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                type={meeting.meetingtype?.MeetingTypeName}
+                key={`${item.category}-${item.MeetingID}`}
+                title={item.MeetingDescription || "No Title"}
+                time={new Date(item.MeetingDate).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                date={new Date(item.MeetingDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                type={item.meetingtype?.MeetingTypeName || item.category}
+                category={item.category}
                 active={index === 0}
               />
-            ))}
+            )) : (
+              <p className="text-sm text-slate-400 text-center py-4 italic">No upcoming events.</p>
+            )}
           </div>
         </div>
       </div>
@@ -120,8 +130,8 @@ export default function StaffDashboard({
 // KPI Card Component
 function KPICard({ label, value, icon }: any) {
   return (
-    <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
-      <div className="h-10 w-10 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center">{icon}</div>
+    <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow group">
+      <div className="h-10 w-10 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center group-hover:scale-110 transition-transform">{icon}</div>
       <p className="mt-4 text-xs font-bold text-slate-400 uppercase tracking-wider">{label}</p>
       <h3 className="text-2xl font-black text-slate-900 mt-1">{value}</h3>
     </div>
@@ -129,7 +139,7 @@ function KPICard({ label, value, icon }: any) {
 }
 
 // Task Row
-function StaffTaskRow({ description, meeting, deadline, priority = false }: any) {
+function StaffTaskRow({ description, category, deadline, priority = false }: any) {
   return (
     <tr className="hover:bg-slate-50 transition-colors group cursor-pointer text-sm">
       <td className="px-8 py-5">
@@ -138,26 +148,34 @@ function StaffTaskRow({ description, meeting, deadline, priority = false }: any)
           <span className="font-bold text-slate-800 group-hover:text-emerald-600 transition-colors">{description}</span>
         </div>
       </td>
-      <td className="px-6 py-5 font-semibold text-slate-500">{meeting}</td>
+      <td className="px-6 py-5">
+        <span className={`px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider ${category === 'Event' ? 'bg-amber-100 text-amber-700' : 'bg-blue-100 text-blue-700'}`}>
+          {category}
+        </span>
+      </td>
       <td className="px-6 py-5 text-slate-500 font-medium">{deadline}</td>
       <td className="px-8 py-5 text-right">
-        <button className="h-8 w-8 inline-flex items-center justify-center rounded-lg hover:bg-emerald-50 text-slate-300 hover:text-emerald-600 transition-all">
+        <Link href="/dashboard/staff/meetings" className="h-8 w-8 inline-flex items-center justify-center rounded-lg hover:bg-emerald-50 text-slate-300 hover:text-emerald-600 transition-all">
           <ArrowRight size={16} />
-        </button>
+        </Link>
       </td>
     </tr>
   );
 }
 
 // Mini Schedule Card
-function MiniScheduleCard({ title, time, type, active = false }: any) {
+function MiniScheduleCard({ title, time, date, type, category, active = false }: any) {
   return (
-    <div className={`p-4 rounded-xl border transition-all ${active ? "bg-emerald-50 border-emerald-100" : "bg-slate-50 border-slate-100"}`}>
+    <div className={`p-4 rounded-xl border transition-all ${active ? "bg-emerald-50 border-emerald-100 shadow-sm" : "bg-slate-50 border-slate-100"}`}>
       <div className="flex items-center justify-between mb-1">
-        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">{type}</span>
-        <span className={`text-[10px] font-bold ${active ? "text-emerald-600" : "text-slate-400"}`}>{time}</span>
+        <span className={`text-[10px] font-bold uppercase tracking-tighter ${active ? "text-emerald-600" : "text-slate-400"}`}>
+          {type} {category && <span className="opacity-50 ml-1">• {category}</span>}
+        </span>
+        <span className={`text-[10px] font-bold ${active ? "text-emerald-600" : "text-slate-400"}`}>{date}, {time}</span>
       </div>
       <p className={`text-sm font-bold ${active ? "text-emerald-900" : "text-slate-800"}`}>{title}</p>
     </div>
   );
 }
+
+import Link from "next/link";

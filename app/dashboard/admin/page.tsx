@@ -17,14 +17,22 @@ export default async function DashboardPage() {
   const chartData = await getMeetingStatusStats();
 
   const pendingMeetings = await prisma.meetings.count({
-    where: { Status: "Scheduled" }
+    where: { 
+      Status: "Scheduled",
+      IsCancelled: false // Exclude cancelled ones from awaiting action
+    }
   });
 
   const completedMeetings = await prisma.meetings.count({
     where: { Status: "Completed" }
   });
 
-  const percent = totalMeetings === 0 ? 0 : Math.round((completedMeetings / totalMeetings) * 100);
+  // Calculate percentage of purely completed meetings against total scheduled (not cancelled)
+  const nonCancelledMeetings = await prisma.meetings.count({
+    where: { IsCancelled: false }
+  });
+
+  const percent = nonCancelledMeetings === 0 ? 0 : Math.round((completedMeetings / nonCancelledMeetings) * 100);
 
   return (
     <div className="space-y-8" style={{ fontFamily: "'Sora', sans-serif" }}>

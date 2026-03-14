@@ -1,0 +1,28 @@
+﻿--- POTENTIAL LINKS ---
+ALREADY LINKED: Staff Amit Patel is linked to User ID 44
+ALREADY LINKED: Staff Neha Sharma is linked to User ID 45
+ALREADY LINKED: Staff Rohit Mehta is linked to User ID 46
+ALREADY LINKED: Staff Pooja Verma is linked to User ID 47
+ALREADY LINKED: Staff Karan Shah is linked to User ID 48
+ALREADY LINKED: Staff Sneha Iyer is linked to User ID 49
+ALREADY LINKED: Staff Vikas Gupta is linked to User ID 50
+ALREADY LINKED: Staff Anjali Desai is linked to User ID 51
+ALREADY LINKED: Staff Rahul Khanna is linked to User ID 52
+ALREADY LINKED: Staff Priya Nair is linked to User ID 53
+ALREADY LINKED: Staff Suresh Yadav is linked to User ID 54
+ALREADY LINKED: Staff Kavita Joshi is linked to User ID 55
+ALREADY LINKED: Staff Manish Agarwal is linked to User ID 56
+ALREADY LINKED: Staff Rina Kulkarni is linked to User ID 57
+ALREADY LINKED: Staff Deepak Singh is linked to User ID 58
+ALREADY LINKED: Staff Nidhi Bansal is linked to User ID 59
+ALREADY LINKED: Staff Arjun Malhotra is linked to User ID 60
+ALREADY LINKED: Staff Meenal Choudhary is linked to User ID 61
+ALREADY LINKED: Staff Sanjay Rao is linked to User ID 62
+ALREADY LINKED: Staff Isha Kapoor is linked to User ID 63
+ALREADY LINKED: Staff Riya bhimani is linked to User ID 65
+ALREADY LINKED: Staff shruti is linked to User ID 70
+NO USER MATCH: Staff Alice M (alice@example.com) has no matching user email.
+NO USER MATCH: Staff Bob K (bob@example.com) has no matching user email.
+ALREADY LINKED: Staff xyz is linked to User ID 75
+ALREADY LINKED: Staff demo1 is linked to User ID 77
+ALREADY LINKED: Staff abc is linked to User ID 78

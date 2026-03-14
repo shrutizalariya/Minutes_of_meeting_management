@@ -7,7 +7,10 @@ export async function getMeetingStatusStats() {
   });
 
   const scheduled = await prisma.meetings.count({
-    where: { Status: "Scheduled" }
+    where: { 
+      Status: "Scheduled",
+      IsCancelled: false
+    }
   });
 
   const cancelled = await prisma.meetings.count({

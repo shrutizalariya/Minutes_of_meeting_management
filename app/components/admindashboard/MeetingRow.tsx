@@ -10,7 +10,7 @@ interface MeetingRowProps {
   status: string | null;
 }
 
-export default function MeetingRow({ id, title, date, type, location, status }: MeetingRowProps) {
+export default function MeetingRow({ id, title, date, type, location, status }: any) {
   return (
     <tr className="group hover:bg-slate-50/50 transition-all duration-200">
       <td className="px-6 py-4">

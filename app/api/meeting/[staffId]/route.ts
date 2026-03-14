@@ -3,10 +3,11 @@ import { NextResponse } from "next/server";
 
 export async function GET(
   req: Request,
-  { params }: { params: { staffId: string } }
+  { params }: { params: Promise<{ staffId: string }> }
 ) {
 
-  const staffId = Number(params.staffId);
+  const resolvedParams = await params;
+  const staffId = Number(resolvedParams.staffId);
 
   const meetings = await prisma.meetings.findMany({
     where: {

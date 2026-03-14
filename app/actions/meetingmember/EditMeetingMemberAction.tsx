@@ -26,6 +26,6 @@ export async function EditMeetingMemberAction(formData: FormData) {
     },
   });
 
-  revalidatePath("/meetingmember");
-  redirect("/meetingmember");
+  revalidatePath("/dashboard/admin/meetingmember");
+  redirect("/dashboard/admin/meetingmember");
 }

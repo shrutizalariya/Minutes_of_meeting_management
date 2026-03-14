@@ -2,11 +2,26 @@ import React from "react";
 import { Settings as SettingsIcon } from "lucide-react";
 import { getUserSettings } from "@/app/actions/user/UpdateProfile";
 import SettingsForm from "./SettingsForm";
+import { cookies } from "next/headers";
+import { verifyToken } from "@/lib/auth";
 
 export default async function SettingsPage() {
-    // For demo purposes, we fetch user with ID 1
-    // Fallback logic inside getUserSettings will pick the first available user if ID 1 is missing
-    const user = await getUserSettings(1);
+    const cookieStore = await cookies();
+    const token = cookieStore.get("token")?.value;
+    let userId = 1;
+
+    if (token) {
+        try {
+            const payload = await verifyToken(token) as { id: number; email: string; role: string };
+            if (payload && payload.id) {
+                userId = payload.id;
+            }
+        } catch (error) {
+            console.error("Token verification failed in settings:", error);
+        }
+    }
+
+    const user = await getUserSettings(userId);
 
     if (!user) {
         return (

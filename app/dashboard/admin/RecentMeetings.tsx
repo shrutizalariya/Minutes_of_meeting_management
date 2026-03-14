@@ -23,12 +23,13 @@ export default async function RecentMeetings() {
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-50">
-            {meetings.map((meeting) => (
+            {meetings.map((meeting: any) => (
+              // @ts-ignore
               <MeetingRow
                 key={meeting.MeetingID}
                 id={meeting.MeetingID}
                 title={meeting.MeetingDescription || "No description"}
-                date={meeting.MeetingDate.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                date={new Date(meeting.MeetingDate).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
                 type={meeting.meetingtype?.MeetingTypeName || "General"}
                 location={meeting.Location || "TBD"}
                 status={meeting.Status}

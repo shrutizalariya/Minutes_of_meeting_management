@@ -1,14 +1,13 @@
-
 import React from "react";
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
-import DeleteMeeting from "@/app/ui/DeleteButtonForMeetings";
+import { cookies } from "next/headers";
+import { verifyToken } from "@/lib/auth";
+import { redirect } from "next/navigation";
 import {
-  Plus,
   Download,
   Search,
   Eye,
-  Edit,
   RotateCcw,
   FileText,
   ChevronLeft,
@@ -18,13 +17,102 @@ import {
   ClipboardList,
   MapPin,
   Clock,
-  Trash2,
+  Calendar,
 } from "lucide-react";
 
-export default async function GetAll() {
-  const rows = await prisma.meetings.findMany({
-    orderBy: { MeetingID: "desc" },
+export default async function GetAll({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string; category?: string; page?: string }>;
+}) {
+  const { q, category, page } = await searchParams;
+  const keyword = q || "";
+  const cat = category || "all";
+  const currentPage = parseInt(page || "1");
+  const pageSize = 10;
+
+  const cookieStore = await cookies();
+  const tokenCookie = cookieStore.get("token");
+
+  if (!tokenCookie) redirect("/");
+
+  const payload: any = await verifyToken(tokenCookie.value);
+  if (!payload || !payload.id) redirect("/");
+
+  // Find staff record
+  const staff = await prisma.staff.findUnique({
+    where: { UserID: payload.id }
   });
+
+  if (!staff) {
+    return <div className="p-8 text-center text-amber-500 font-bold">No staff profile found for your account.</div>;
+  }
+
+  const staffId = staff.StaffID;
+
+  // Fetch both meetings and events with keyword filtering
+  const meetingAssignments = await prisma.meetingmember.findMany({
+    where: { 
+      StaffID: staffId,
+      meetings: {
+        OR: [
+          { MeetingDescription: { contains: keyword } },
+          { Location: { contains: keyword } }
+        ]
+      }
+    },
+    include: { meetings: { include: { meetingtype: true } } },
+  });
+
+  const eventAssignments = await prisma.eventmember.findMany({
+    where: { 
+      StaffID: staffId,
+      events: {
+        OR: [
+          { EventDescription: { contains: keyword } },
+          { Location: { contains: keyword } }
+        ]
+      }
+    },
+    include: { events: { include: { eventtype: true } } },
+  });
+
+  // Map to common structure
+  const meetingsList = meetingAssignments.map(m => ({
+    id: m.MeetingMemberID,
+    description: m.meetings?.MeetingDescription || "Untitled Meeting",
+    date: m.meetings?.MeetingDate,
+    time: m.meetings?.MeetingDate ? new Date(m.meetings.MeetingDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "N/A",
+    venue: m.meetings?.Location || "N/A",
+    document: m.meetings?.DocumentPath,
+    category: "Meeting",
+    type: m.meetings?.meetingtype?.MeetingTypeName || "Standard",
+  }));
+
+  const eventsList = eventAssignments.map(e => ({
+    id: e.EventMemberID,
+    description: e.events?.EventDescription || "Untitled Event",
+    date: e.events?.EventDate,
+    time: e.events?.EventDate ? new Date(e.events.EventDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "N/A",
+    venue: e.events?.Location || "N/A",
+    document: e.events?.DocumentPath,
+    category: "Event",
+    type: e.events?.eventtype?.EventTypeName || "Standard",
+  }));
+
+  // Filter by category
+  let allRecords = [...meetingsList, ...eventsList];
+  if (cat === "meeting") allRecords = meetingsList;
+  if (cat === "event") allRecords = eventsList;
+
+  // Final sort
+  allRecords = allRecords.sort((a, b) => 
+    new Date(b.date || 0).getTime() - new Date(a.date || 0).getTime()
+  );
+
+  const totalRecords = allRecords.length;
+  const totalPages = Math.ceil(totalRecords / pageSize);
+  const paginatedRecords = allRecords.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
   return (
     <>
@@ -86,30 +174,6 @@ export default async function GetAll() {
           letter-spacing: 0.01em;
           margin-top: 0.2rem;
         }
-
-        .btn-primary {
-          display: inline-flex;
-          align-items: center;
-          gap: 0.5rem;
-          background: linear-gradient(135deg, #1e3a8a 0%, #1d4ed8 100%);
-          color: #fff;
-          border: none;
-          border-radius: 10px;
-          padding: 0.65rem 1.3rem;
-          font-size: 0.82rem;
-          font-weight: 600;
-          font-family: 'Sora', sans-serif;
-          cursor: pointer;
-          text-decoration: none;
-          box-shadow: 0 2px 8px rgba(29,78,216,0.35), 0 1px 2px rgba(0,0,0,0.08);
-          transition: all 0.2s;
-          letter-spacing: 0.01em;
-        }
-        .btn-primary:hover {
-          transform: translateY(-1px);
-          box-shadow: 0 6px 20px rgba(29,78,216,0.4), 0 1px 2px rgba(0,0,0,0.08);
-        }
-        .btn-primary:active { transform: scale(0.97); }
 
         /* ---- STATS STRIP ---- */
         .stats-strip {
@@ -192,11 +256,15 @@ export default async function GetAll() {
         }
         .filter-body {
           padding: 1.5rem 1.6rem;
+        }
+        
+        .filter-form {
           display: grid;
           grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
           gap: 1.25rem;
           align-items: end;
         }
+
         .form-group { display: flex; flex-direction: column; gap: 0.45rem; }
         .form-label {
           font-size: 0.68rem;
@@ -234,19 +302,10 @@ export default async function GetAll() {
         }
         .form-control.has-icon { padding-left: 2.25rem; }
 
-        .filter-actions {
-          padding: 1rem 1.6rem 1.4rem;
-          border-top: 1px solid #f1f5f9;
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          gap: 0.75rem;
-        }
-        .action-btns-group { display: flex; gap: 0.75rem; }
-        
         .btn-search {
           display: inline-flex;
           align-items: center;
+          justify-content: center;
           gap: 0.45rem;
           background: #0f172a;
           color: #fff;
@@ -259,40 +318,23 @@ export default async function GetAll() {
           cursor: pointer;
           transition: all 0.15s;
           letter-spacing: 0.01em;
+          height: 38px;
         }
         .btn-search:hover { background: #1e293b; transform: translateY(-1px); }
         .btn-reset {
-          display: inline-flex;
-          align-items: center;
-          gap: 0.45rem;
-          background: transparent;
-          color: #64748b;
+          width: 38px;
+          height: 38px;
+          border-radius: 9px;
           border: 1.5px solid #e2e8f0;
-          border-radius: 9px;
-          padding: 0.6rem 1.2rem;
-          font-size: 0.8rem;
-          font-weight: 600;
-          font-family: 'Sora', sans-serif;
-          cursor: pointer;
-          transition: all 0.15s;
-        }
-        .btn-reset:hover { background: #f8fafc; border-color: #cbd5e1; color: #475569; }
-
-        .btn-bulk-delete {
-          display: inline-flex;
+          background: #fff;
+          color: #64748b;
+          display: flex;
           align-items: center;
-          gap: 0.45rem;
-          background: #fef2f2;
-          color: #dc2626;
-          border: 1px solid #fee2e2;
-          border-radius: 9px;
-          padding: 0.6rem 1.2rem;
-          font-size: 0.8rem;
-          font-weight: 700;
-          cursor: pointer;
+          justify-content: center;
           transition: all 0.15s;
+          text-decoration: none;
         }
-        .btn-bulk-delete:hover { background: #dc2626; color: #fff; }
+        .btn-reset:hover { background: #f1f5f9; border-color: #cbd5e1; color: #1e293b; }
 
         /* ---- TABLE CARD ---- */
         .table-card {
@@ -432,12 +474,17 @@ export default async function GetAll() {
           font-style: italic;
         }
 
-        .action-row {
-          display: flex;
-          align-items: center;
-          justify-content: flex-end;
-          gap: 0.35rem;
+        .category-badge {
+          padding: 0.2rem 0.5rem;
+          border-radius: 6px;
+          font-size: 0.65rem;
+          font-weight: 800;
+          text-transform: uppercase;
+          letter-spacing: 0.05em;
         }
+        .category-meeting { background: #eff6ff; color: #1d4ed8; }
+        .category-event { background: #fffbeb; color: #d97706; }
+
         .btn-icon {
           width: 34px;
           height: 34px;
@@ -450,30 +497,19 @@ export default async function GetAll() {
           cursor: pointer;
           text-decoration: none;
           transition: all 0.15s;
+          color: #94a3b8;
         }
-        .btn-icon.view  { color: #1d4ed8; }
-        .btn-icon.edit  { color: #16a34a; }
-        .btn-icon.del   { color: #94a3b8; }
-
-        .btn-icon:hover.view  { background: #eff6ff; color: #1e40af; }
-        .btn-icon:hover.edit  { background: #f0fdf4; color: #15803d; }
-        .btn-icon:hover.del   { background: #fef2f2; color: #dc2626; }
-
-        .action-divider {
-          width: 1px;
-          height: 16px;
-          background: #f1f5f9;
-        }
+        .btn-icon:hover { background: #f1f5f9; color: #1e293b; }
 
         .table-footer {
-          padding: 0.9rem 1.6rem;
+          padding: 1rem 1.6rem;
           border-top: 1px solid #f1f5f9;
           background: #fafbfe;
           display: flex;
           align-items: center;
           justify-content: space-between;
           flex-wrap: wrap;
-          gap: 0.75rem;
+          gap: 1rem;
         }
         .page-info {
           font-size: 0.72rem;
@@ -484,9 +520,9 @@ export default async function GetAll() {
         .pagination {
           display: flex;
           align-items: center;
-          gap: 0.3rem;
+          gap: 0.35rem;
         }
-        .page-btn {
+        .page-link {
           width: 32px;
           height: 32px;
           border-radius: 8px;
@@ -496,71 +532,33 @@ export default async function GetAll() {
           border: 1.5px solid #e2e8f0;
           background: #fff;
           color: #64748b;
-          cursor: pointer;
           transition: all 0.15s;
           font-size: 0.78rem;
           font-weight: 600;
-          font-family: 'Sora', sans-serif;
+          text-decoration: none;
         }
-        .page-btn:hover { background: #0f172a; color: #fff; border-color: #0f172a; }
-        .page-btn.active { background: #1d4ed8; color: #fff; border-color: #1d4ed8; }
-
-        .checkbox-cell { width: 40px; padding-right: 0; }
-        
-        /* HOVER LOGIC FOR ROW CHECKBOXES */
-        tbody .checkbox-cell input[type="checkbox"] {
-          width: 16px;
-          height: 16px;
-          accent-color: #1d4ed8;
-          cursor: pointer;
-          opacity: 0;
-          transition: opacity 0.2s ease;
-        }
-
-        /* HEADER CHECKBOX IS ALWAYS VISIBLE */
-        thead .checkbox-cell input[type="checkbox"] {
-          width: 16px;
-          height: 16px;
-          accent-color: #1d4ed8;
-          cursor: pointer;
-          opacity: 1;
-        }
-
-        tbody tr:hover .checkbox-cell input[type="checkbox"],
-        tbody .checkbox-cell input[type="checkbox"]:checked {
-          opacity: 1;
-        }
+        .page-link:hover { background: #0f172a; color: #fff; border-color: #0f172a; }
+        .page-link.active { background: #1d4ed8; color: #fff; border-color: #1d4ed8; }
+        .page-link.disabled { opacity: 0.3; pointer-events: none; }
 
         @media (max-width: 900px) {
           .stats-strip { grid-template-columns: 1fr; }
-          .filter-body { grid-template-columns: 1fr; }
+          .filter-form { grid-template-columns: 1fr; }
         }
       `}</style>
-
-      {/* INLINE SCRIPT FOR SELECT ALL LOGIC - Using ID to avoid React prop error */}
-      <script dangerouslySetInnerHTML={{ __html: `
-        document.addEventListener('change', function(e) {
-          if (e.target && e.target.id === 'master-checkbox') {
-            const checkboxes = document.getElementsByClassName('row-checkbox');
-            for (let i = 0; i < checkboxes.length; i++) {
-              checkboxes[i].checked = e.target.checked;
-            }
-          }
-        });
-      `}} />
 
       <div>
         <div className="meetings-inner">
           <div className="header-block">
             <nav className="breadcrumb">
-              <Link href="/">Home</Link>
+              <Link href="/dashboard/staff">Dashboard</Link>
               <span className="breadcrumb-sep">/</span>
-              <span style={{ color: "#475569" }}>Meetings</span>
+              <span style={{ color: "#475569" }}>My Schedule</span>
             </nav>
             <div className="header-row">
               <h1 className="page-title">
-                Meeting Management
-                <span>Oversee, search, and manage all recorded meetings</span>
+                My Personalized Schedule
+                <span>Track all meetings and events you are involved in</span>
               </h1>
             </div>
           </div>
@@ -571,26 +569,26 @@ export default async function GetAll() {
                 <ClipboardList size={20} />
               </div>
               <div>
-                <div className="stat-label">Total Meetings</div>
-                <div className="stat-value">{rows.length}</div>
+                <div className="stat-label">Total Assignments</div>
+                <div className="stat-value">{totalRecords}</div>
               </div>
             </div>
             <div className="stat-card">
               <div className="stat-icon green">
-                <Download size={20} />
+                <FileText size={20} />
               </div>
               <div>
-                <div className="stat-label">With Documents</div>
-                <div className="stat-value">{rows.filter((r: any) => r.DocumentPath).length}</div>
+                <div className="stat-label">Meetings</div>
+                <div className="stat-value">{meetingsList.length}</div>
               </div>
             </div>
             <div className="stat-card">
               <div className="stat-icon amber">
-                <CalendarDays size={20} />
+                <Calendar size={20} />
               </div>
               <div>
-                <div className="stat-label">No Document</div>
-                <div className="stat-value">{rows.filter((r: any) => !r.DocumentPath).length}</div>
+                <div className="stat-label">Events</div>
+                <div className="stat-value">{eventsList.length}</div>
               </div>
             </div>
           </div>
@@ -600,177 +598,166 @@ export default async function GetAll() {
               <div className="filter-header-icon">
                 <SlidersHorizontal size={16} />
               </div>
-              <h2>Advanced Search & Filter</h2>
+              <h2>Search My Records</h2>
             </div>
-
             <div className="filter-body">
-              <div className="form-group">
-                <label className="form-label">Search Keyword</label>
-                <div className="input-wrap">
-                  <Search className="input-icon" size={15} />
-                  <input
-                    type="text"
-                    placeholder="Search by title..."
-                    className="form-control has-icon"
-                  />
+              <form action="" method="GET" className="filter-form">
+                <div className="form-group">
+                  <label className="form-label">Keyword</label>
+                  <div className="input-wrap">
+                    <Search className="input-icon" size={15} />
+                    <input 
+                      type="text" 
+                      name="q" 
+                      placeholder="Meeting description or venue..." 
+                      className="form-control has-icon" 
+                      defaultValue={keyword}
+                    />
+                  </div>
                 </div>
-              </div>
-
-              <div className="form-group">
-                <label className="form-label">Meeting Venue</label>
-                <div className="input-wrap">
-                  <MapPin className="input-icon" size={14} />
-                  <input
-                    type="text"
-                    placeholder="Search by venue..."
-                    className="form-control has-icon"
-                  />
+                <div className="form-group">
+                  <label className="form-label">Category</label>
+                  <select name="category" className="form-control" defaultValue={cat}>
+                    <option value="all">All Categories</option>
+                    <option value="meeting">Meetings Only</option>
+                    <option value="event">Events Only</option>
+                  </select>
                 </div>
-              </div>
-
-              <div className="form-group">
-                <label className="form-label">Meeting Time</label>
-                <div className="input-wrap">
-                  <Clock className="input-icon" size={14} />
-                  <input
-                    type="time"
-                    className="form-control has-icon"
-                  />
+                <div className="form-group">
+                  <div className="flex gap-2">
+                    <button type="submit" className="btn-search flex-1">
+                      <Search size={14} /> Search
+                    </button>
+                    <Link href="/dashboard/staff/meetings" className="btn-reset" title="Reset Filters">
+                      <RotateCcw size={14} />
+                    </Link>
+                  </div>
                 </div>
-              </div>
-
-              <div className="form-group">
-                <label className="form-label">Result Limit</label>
-                <select className="form-control">
-                  <option value="all">Show All Records</option>
-                  <option value="10">Top 10 Recent</option>
-                  <option value="25">Top 25 Recent</option>
-                  <option value="50">Top 50 Recent</option>
-                </select>
-              </div>
-            </div>
-
-            <div className="filter-actions">
-              <div className="action-btns-group">
-                <button className="btn-search">
-                  <Search size={14} /> Search Records
-                </button>
-                <button className="btn-reset">
-                  <RotateCcw size={14} /> Reset
-                </button>
-              </div>
-
-              <button className="btn-bulk-delete">
-                <Trash2 size={14} /> Delete Selected
-              </button>
+              </form>
             </div>
           </div>
 
           <div className="table-card">
             <div className="table-header">
-              <h3>Record List</h3>
-              <span className="record-badge">{rows.length} Records</span>
+              <h3>Action Items & Agenda</h3>
+              <span className="record-badge">{totalRecords} Records</span>
             </div>
 
             <div style={{ overflowX: "auto" }}>
               <table>
                 <thead>
                   <tr>
-                    <th className="checkbox-cell">
-                      {/* MASTER CHECKBOX - No event handler here to avoid Next.js error */}
-                      <input 
-                        type="checkbox" 
-                        id="master-checkbox"
-                        title="Select All" 
-                      />
-                    </th>
-                    <th>Meeting Details</th>
+                    <th>Description</th>
+                    <th>Category</th>
+                    <th className="center">Type</th>
                     <th className="center">Attachment</th>
-                    <th className="right">Actions</th>
+                    <th className="right">View</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {rows.map((m: any) => (
-                    <tr key={m.MeetingID}>
-                      <td className="checkbox-cell">
-                        {/* ROW CHECKBOX */}
-                        <input 
-                          type="checkbox" 
-                          className="row-checkbox" 
-                          value={m.MeetingID} 
-                        />
-                      </td>
+                  {paginatedRecords.length > 0 ? paginatedRecords.map((r: any) => (
+                    <tr key={`${r.category}-${r.id}`}>
                       <td>
                         <div className="row-identity">
                           <div className="row-avatar">
-                            <FileText size={18} />
+                            {r.category === 'Meeting' ? <FileText size={18} /> : <Calendar size={18} />}
                           </div>
                           <div>
-                            <div className="row-title">{m.MeetingDescription}</div>
+                            <div className="row-title">{r.description}</div>
                             <div className="row-meta">
                               <span className="meta-item">
-                                <Clock size={12} />
-                                {m.MeetingTime || "N/A"}
+                                <Clock size={12} /> 
+                                {r.date ? new Date(r.date).toLocaleDateString() : 'N/A'} {r.time}
                               </span>
-                              <span className="meta-item">
-                                <MapPin size={12} />
-                                {m.Venue || "Main Hall"}
-                              </span>
+                              <span className="meta-item"><MapPin size={12} /> {r.venue}</span>
                             </div>
                           </div>
                         </div>
                       </td>
-
+                      <td>
+                        <span className={`category-badge ${r.category === 'Meeting' ? 'category-meeting' : 'category-event'}`}>
+                          {r.category}
+                        </span>
+                      </td>
                       <td className="center">
-                        {m.DocumentPath ? (
-                          <a href={m.DocumentPath} download className="btn-download">
-                            <Download size={13} /> Download PDF
+                        <span className="text-xs font-medium text-slate-500">{r.type}</span>
+                      </td>
+                      <td className="center">
+                        {r.document ? (
+                          <a href={r.document} download className="btn-download">
+                            <Download size={13} /> PDF
                           </a>
                         ) : (
-                          <span className="no-doc">No attachment</span>
+                          <span className="no-doc">None</span>
                         )}
                       </td>
-
                       <td className="right">
-                        <div className="action-row">
-                          <Link
-                            href={`/dashboard/admin/meetings/${m.MeetingID}`}
-                            className="btn-icon view"
-                            title="View details"
-                          >
-                            <Eye size={17} />
-                          </Link>
-                          <div className="action-divider" />
-                          <Link
-                            href={`/dashboard/admin/meetings/edit/${m.MeetingID}`}
-                            className="btn-icon edit"
-                            title="Edit"
-                          >
-                            <Edit size={17} />
-                          </Link>
-                          <div className="action-divider" />
-                          <div className="btn-icon del" title="Delete">
-                            <DeleteMeeting id={m.MeetingID} />
-                          </div>
+                        <Link href={`/dashboard/${r.category === 'Meeting' ? 'staff/meetings' : 'staff/meetings'}`} className="btn-icon">
+                          <Eye size={17} />
+                        </Link>
+                      </td>
+                    </tr>
+                  )) : (
+                    <tr>
+                      <td colSpan={5} className="p-16 text-center">
+                        <div className="flex flex-col items-center gap-2">
+                          <SlidersHorizontal size={32} className="text-slate-200" />
+                          <p className="text-slate-400 font-medium italic">No matching records found.</p>
                         </div>
                       </td>
                     </tr>
-                  ))}
+                  )}
                 </tbody>
               </table>
             </div>
 
-            <div className="table-footer">
-              <p className="page-info">Showing page 1 of 1</p>
-              <div className="pagination">
-                <button className="page-btn"><ChevronLeft size={15} /></button>
-                <button className="page-btn active">1</button>
-                <button className="page-btn"><ChevronRight size={15} /></button>
+            {totalPages > 1 && (
+              <div className="px-8 py-5 bg-slate-50/30 border-t border-slate-50 flex items-center justify-between">
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                  Showing {(currentPage - 1) * pageSize + 1} to {Math.min(currentPage * pageSize, totalRecords)} of {totalRecords}
+                </p>
+                <div className="flex items-center gap-2">
+                  <Link 
+                    href={`/dashboard/staff/meetings?q=${keyword}&category=${cat}&page=${currentPage - 1}`}
+                    className={`p-2 rounded-xl transition-all ${
+                      currentPage <= 1 
+                      ? 'text-slate-200 pointer-events-none' 
+                      : 'text-slate-400 hover:bg-white hover:text-emerald-600 shadow-sm'
+                    }`}
+                  >
+                    <ChevronLeft size={20} />
+                  </Link>
+                  <div className="flex items-center gap-1">
+                    {[...Array(totalPages)].map((_, i) => (
+                      <Link
+                        key={i + 1}
+                        href={`/dashboard/staff/meetings?q=${keyword}&category=${cat}&page=${i + 1}`}
+                        className={`h-8 w-8 flex items-center justify-center rounded-lg text-[10px] font-black transition-all ${
+                          currentPage === i + 1
+                          ? 'bg-emerald-600 text-white shadow-md'
+                          : 'text-slate-400 hover:bg-white'
+                        }`}
+                      >
+                        {i + 1}
+                      </Link>
+                    ))}
+                  </div>
+                  <Link 
+                    href={`/dashboard/staff/meetings?q=${keyword}&category=${cat}&page=${currentPage + 1}`}
+                    className={`p-2 rounded-xl transition-all ${
+                      currentPage >= totalPages 
+                      ? 'text-slate-200 pointer-events-none' 
+                      : 'text-slate-400 hover:bg-white hover:text-emerald-600 shadow-sm'
+                    }`}
+                  >
+                    <ChevronRight size={20} />
+                  </Link>
+                </div>
               </div>
-            </div>
+            )}
           </div>
         </div>
       </div>
     </>
   );
-}
+}
