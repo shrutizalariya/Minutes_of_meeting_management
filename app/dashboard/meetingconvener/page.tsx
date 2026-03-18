@@ -1,10 +1,42 @@
-import React from "react";
+"use client";
+
+import React, { useState, useEffect } from "react";
 import { 
   Plus, Edit3, Users, CheckCircle, Clock, 
   MoreVertical, FileText, ArrowRight, Video, MapPin
 } from "lucide-react";
 
 export default function ConvenerDashboard() {
+  const [data, setData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        const res = await fetch("/api/dashboard/convener");
+        const json = await res.json();
+        setData(json);
+      } catch (error) {
+        console.error("Failed to fetch dashboard data:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchData();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="w-12 h-12 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
+
+  const stats = data?.metrics || { convenedSessions: "00", draftMinutes: "00", avgAttendance: "0%", resolvedItems: "00" };
+  const meetings = data?.meetings || [];
+  const assignments = data?.assignments || [];
+
   return (
     <div className="space-y-10">
       <div className="flex items-center justify-between">
@@ -24,63 +56,65 @@ export default function ConvenerDashboard() {
 
       {/* Management Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <KPICard label="My Convened Sessions" value="08" icon={<Video className="text-indigo-600" />} />
-        <KPICard label="Draft Minutes" value="02" icon={<Edit3 className="text-amber-600" />} />
-        <KPICard label="Avg. Attendance" value="92%" icon={<Users className="text-emerald-600" />} />
-        <KPICard label="Resolved Items" value="45" icon={<CheckCircle className="text-blue-600" />} />
+        <KPICard label="My Convened Sessions" value={stats.convenedSessions} icon={<Video className="text-indigo-600" />} />
+        <KPICard label="Draft Minutes" value={stats.draftMinutes} icon={<Edit3 className="text-amber-600" />} />
+        <KPICard label="Avg. Attendance" value={stats.avgAttendance} icon={<Users className="text-emerald-600" />} />
+        <KPICard label="Resolved Items" value={stats.resolvedItems} icon={<CheckCircle className="text-blue-600" />} />
       </div>
 
       {/* Convener Workflow */}
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-10">
         
-        {/* Active Session Management - Maps to Meeting Model */}
+        {/* Active Session Management */}
         <div className="xl:col-span-2 space-y-6">
           <div className="flex items-center justify-between px-2">
             <h2 className="font-extrabold text-slate-400 uppercase tracking-widest text-[11px]">Pending Documentation</h2>
           </div>
 
           <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-            <table className="w-full text-left">
-              <thead>
-                <tr className="text-[11px] font-black text-slate-400 uppercase tracking-wider border-b border-slate-100 bg-slate-50/50">
-                  <th className="px-8 py-5">Meeting Topic</th>
-                  <th className="px-6 py-5">Attendance</th>
-                  <th className="px-6 py-5">Action Items</th>
-                  <th className="px-8 py-5 text-right">Draft State</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-50">
-                <ConvenerRow 
-                  title="Strategy Alignment Q2" 
-                  members="12/14" 
-                  actions="05" 
-                  state="Needs Minutes" 
-                  urgent 
-                />
-                <ConvenerRow 
-                  title="Dept. Head Sync" 
-                  members="08/08" 
-                  actions="02" 
-                  state="Ready" 
-                />
-                <ConvenerRow 
-                  title="Infrastructure Phase II" 
-                  members="15/20" 
-                  actions="12" 
-                  state="Draft Saved" 
-                />
-              </tbody>
-            </table>
+            {meetings.length > 0 ? (
+              <table className="w-full text-left">
+                <thead>
+                  <tr className="text-[11px] font-black text-slate-400 uppercase tracking-wider border-b border-slate-100 bg-slate-50/50">
+                    <th className="px-8 py-5">Meeting Topic</th>
+                    <th className="px-6 py-5">Attendance</th>
+                    <th className="px-6 py-5">Action Items</th>
+                    <th className="px-8 py-5 text-right">Draft State</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-50">
+                  {meetings.map((m: any) => (
+                    <ConvenerRow 
+                      key={m.id}
+                      title={m.title} 
+                      members={m.members} 
+                      actions={m.actions} 
+                      state={m.state} 
+                      location={m.location}
+                      urgent={m.urgent} 
+                    />
+                  ))}
+                </tbody>
+              </table>
+            ) : (
+              <div className="p-10 text-center text-slate-400 font-medium">
+                No pending documentation found.
+              </div>
+            )}
           </div>
         </div>
 
-        {/* Assignments Sidebar - Maps to ActionItem assigning to Staff */}
+        {/* Assignments Sidebar */}
         <div className="space-y-6">
           <h2 className="font-extrabold text-slate-400 uppercase tracking-widest text-[11px] px-2">Recent Assignments</h2>
           <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-4">
-             <AssignmentCard staff="Mark Tech" task="Deploy V3 clusters" deadline="Feb 28" />
-             <AssignmentCard staff="Lucy HR" task="Employee Onboarding" deadline="Mar 02" />
-             <AssignmentCard staff="David Ops" task="Logistical Audit" deadline="Feb 27" />
+             {assignments.length > 0 ? (
+               assignments.map((a: any, idx: number) => (
+                 <AssignmentCard key={idx} staff={a.staff} task={a.task} deadline={a.deadline} />
+               ))
+             ) : (
+               <p className="text-slate-400 text-xs text-center py-4">No recent assignments.</p>
+             )}
              
              <button className="w-full py-3 mt-4 text-[11px] font-black uppercase text-indigo-600 bg-indigo-50 rounded-xl hover:bg-indigo-100 transition-colors">
                 View All Assignments
@@ -104,14 +138,14 @@ function KPICard({ label, value, icon }: any) {
   );
 }
 
-function ConvenerRow({ title, members, actions, state, urgent = false }: any) {
+function ConvenerRow({ title, members, actions, state, location, urgent = false }: any) {
   return (
     <tr className="hover:bg-indigo-50/30 transition-colors group cursor-pointer text-sm">
       <td className="px-8 py-6">
         <div className="flex flex-col">
           <span className="font-bold text-slate-800 group-hover:text-indigo-600 transition-colors leading-none">{title}</span>
           <span className="text-[10px] text-slate-400 font-bold mt-2 flex items-center gap-1">
-             <MapPin size={10} /> Boardroom C
+             <MapPin size={10} /> {location}
           </span>
         </div>
       </td>
@@ -139,7 +173,7 @@ function ConvenerRow({ title, members, actions, state, urgent = false }: any) {
 function AssignmentCard({ staff, task, deadline }: any) {
   return (
     <div className="flex items-start gap-4 p-3 hover:bg-slate-50 rounded-xl transition-all border border-transparent hover:border-slate-100">
-      <div className="h-8 w-8 bg-slate-100 rounded-lg flex-shrink-0 flex items-center justify-center text-[10px] font-black text-slate-400">
+      <div className="h-8 w-8 bg-slate-100 rounded-lg flex-shrink-0 flex items-center justify-center text-[10px] font-black text-slate-400 uppercase">
         {staff.split(' ')[0][0]}
       </div>
       <div className="flex-1 overflow-hidden">

@@ -59,7 +59,7 @@ export default function LoginPage() {
       router.push("/dashboard/staff");
     }
     else{
-      router.push("/dashboard/meetingconvener");
+      router.push("/dashboard/convener");
     }
   };
 

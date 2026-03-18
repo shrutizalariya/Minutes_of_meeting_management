@@ -124,6 +124,9 @@ export async function EditMeetingAction(formData: FormData) {
   });
 
   revalidatePath("/dashboard/admin/meetings");
+  revalidatePath("/dashboard/convener/meetings");
+  revalidatePath("/dashboard/convener/archive");
 
-  redirect("/dashboard/admin/meetings");
+  const redirectTo = formData.get("redirectTo") as string;
+  redirect(redirectTo || "/dashboard/admin/meetings");
 }

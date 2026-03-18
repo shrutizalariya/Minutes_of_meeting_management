@@ -1,4 +1,6 @@
-import React from "react";
+"use client";
+
+import React, { useState, useEffect } from "react";
 import { 
   FileEdit, Calendar, CheckSquare, Users, 
   Settings, Bell, Search, LogOut, ChevronRight, LayoutDashboard,
@@ -6,6 +8,25 @@ import {
 } from "lucide-react";
 
 export default function ConvenerLayout({ children }: { children: React.ReactNode }) {
+  const [profile, setProfile] = useState<any>(null);
+
+  useEffect(() => {
+    async function fetchProfile() {
+      try {
+        const res = await fetch("/api/dashboard/convener");
+        const json = await res.json();
+        setProfile(json.userProfile);
+      } catch (error) {
+        console.error("Failed to fetch profile:", error);
+      }
+    }
+    fetchProfile();
+  }, []);
+
+  const userName = profile?.name || "Convener";
+  const userInitials = profile?.initials || "C";
+  const userRole = profile?.role || "Meeting Facilitator";
+
   return (
     <div className="min-h-screen bg-[#F4F7FE] flex text-slate-900 selection:bg-indigo-100 antialiased">
       {/* Power Sidebar (Dark Mode) */}
@@ -29,13 +50,16 @@ export default function ConvenerLayout({ children }: { children: React.ReactNode
 
         <div className="p-6 border-t border-slate-800">
           <div className="flex items-center gap-3 px-4 py-3 bg-slate-800/50 rounded-xl mb-4">
-            <div className="h-8 w-8 rounded-full bg-indigo-500 flex items-center justify-center text-[10px] font-bold text-white uppercase">SC</div>
+            <div className="h-8 w-8 rounded-full bg-indigo-500 flex items-center justify-center text-[10px] font-bold text-white uppercase">{userInitials}</div>
             <div className="overflow-hidden">
-              <p className="text-xs font-bold text-white truncate">Sarah Convener</p>
-              <p className="text-[10px] text-slate-400 uppercase font-medium italic leading-none">Meeting Facilitator</p>
+              <p className="text-xs font-bold text-white truncate">{userName}</p>
+              <p className="text-[10px] text-slate-400 uppercase font-medium italic leading-none">{userRole}</p>
             </div>
           </div>
-          <button className="flex items-center gap-3 text-slate-400 hover:text-white transition-colors text-sm font-medium w-full px-4">
+          <button 
+            onClick={() => window.location.href = "/"}
+            className="flex items-center gap-3 text-slate-400 hover:text-white transition-colors text-sm font-medium w-full px-4"
+          >
             <LogOut size={18} /> Exit Portal
           </button>
         </div>
@@ -52,7 +76,7 @@ export default function ConvenerLayout({ children }: { children: React.ReactNode
 
           <div className="flex items-center gap-5">
              <div className="text-right hidden sm:block">
-                <p className="text-xs font-bold text-slate-900 leading-none">Sarah Chen</p>
+                <p className="text-xs font-bold text-slate-900 leading-none">{userName}</p>
                 <p className="text-[10px] font-medium text-slate-400 mt-1 uppercase">Dept: Operations</p>
               </div>
             <button className="relative p-2.5 text-slate-500 hover:bg-slate-100 rounded-xl transition-all">
@@ -80,4 +104,4 @@ function SidebarLink({ icon, label, active = false }: { icon: React.ReactNode; l
       {active && <ChevronRight size={14} className="opacity-60" />}
     </button>
   );
-}
+}

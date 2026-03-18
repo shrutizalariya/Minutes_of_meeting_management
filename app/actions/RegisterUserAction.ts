@@ -47,6 +47,11 @@ export async function RegisterUserAction(formData: FormData) {
   const password = formData.get("password") as string;
   const role = (formData.get("role") as string) || "user";
 
+  // Check if role is admin - Block registration
+  if (role.toLowerCase() === "admin") {
+    throw new Error("Admin registration is not allowed");
+  }
+
   // Check if email already exists
   const existingUser = await prisma.users.findUnique({ where: { Email: email } });
   if (existingUser) {
@@ -67,7 +72,7 @@ export async function RegisterUserAction(formData: FormData) {
   });
 
   // If role is staff, also create staff record
-  if (role === "staff") {
+  if (role.toLowerCase() === "staff") {
     await prisma.staff.create({
       data: {
         StaffName: name,
