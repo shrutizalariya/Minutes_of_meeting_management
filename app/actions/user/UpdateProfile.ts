@@ -17,17 +17,31 @@ export async function updateProfile(formData: FormData) {
     }
 
     try {
-        await prisma.users.update({
-            where: { Id: id },
-            data: {
-                Name: name,
-                Email: email,
-                EmailNotifications: emailNotif,
-                DesktopAlerts: desktopAlerts,
-            },
+        await prisma.$transaction(async (tx) => {
+            // 1. Update the Users table
+            await tx.users.update({
+                where: { Id: id },
+                data: {
+                    Name: name,
+                    Email: email,
+                    EmailNotifications: emailNotif,
+                    DesktopAlerts: desktopAlerts,
+                },
+            });
+
+            // 2. Sync with the Staff table
+            await tx.staff.updateMany({
+                where: { UserID: id },
+                data: {
+                    StaffName: name,
+                    EmailAddress: email
+                }
+            });
         });
 
         revalidatePath("/dashboard/admin/settings");
+        revalidatePath("/dashboard/staff/settings");
+        revalidatePath("/dashboard/staff");
         return { success: true };
     } catch (error) {
         console.error("Update profile error:", error);

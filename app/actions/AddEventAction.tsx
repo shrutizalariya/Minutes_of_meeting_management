@@ -40,7 +40,7 @@ export async function AddEventAction(formData: FormData) {
   });
 
   revalidatePath("/dashboard/admin/events");
-  redirect("/dashboard/admin/events");
+  redirect("/dashboard/admin/events?success=Event+Added+Successfully");
 }
 
 

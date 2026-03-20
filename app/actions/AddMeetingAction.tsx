@@ -49,20 +49,32 @@ export async function AddMeetingAction(formData: FormData) {
     },
   });
 
-  // Create notification for the new meeting
-  await prisma.notification.create({
-    data: {
-      Type: "meeting",
-      Title: "New Meeting Scheduled",
-      Message: `Meeting: ${MeetingDescription || "Untitled"} set for ${new Date(MeetingDate).toLocaleDateString()}`,
-      Time: "Just now",
-      Color: "blue",
-      IsNew: true
-    }
+  // Create notification for the new meeting - Targeted at all Meeting Conveners
+  const conveners = await prisma.users.findMany({
+    where: { Role: "Meeting Convener" },
+    select: { Id: true }
   });
 
-  revalidatePath("/dashboard/admin/notifications");
+  await Promise.all(conveners.map(c => 
+    prisma.notification.create({
+      data: {
+        UserID: c.Id,
+        Type: "meeting",
+        Title: "New Facilitation Assigned",
+        Message: `New meeting: ${MeetingDescription || "Untitled"} set for ${new Date(MeetingDate).toLocaleDateString()}`,
+        Time: "Just now",
+        Color: "blue",
+        IsNew: true
+      }
+    })
+  ));
 
+  revalidatePath("/dashboard/admin/notifications");
   revalidatePath("/dashboard/admin/meetings");
-  redirect("/dashboard/admin/meetings");
+  revalidatePath("/dashboard/convener/meetings");
+
+  const redirectTo = formData.get("redirectTo") as string;
+  const target = redirectTo || "/dashboard/admin/meetings";
+  const separator = target.includes("?") ? "&" : "?";
+  redirect(`${target}${separator}success=Meeting+Scheduled+Successfully`);
 }

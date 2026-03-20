@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { EditMeetingAction } from "@/app/actions/EditMeetingAction";
 import Link from "next/link";
 import { Calendar, Tag, FileText, ArrowLeft, Check, Paperclip } from "lucide-react";
+import ConfirmationForm from "@/app/components/ConfirmationForm";
 
 export default async function EditMeeting({
   params,
@@ -40,7 +41,12 @@ export default async function EditMeeting({
         </div>
 
         {/* Form Body */}
-        <form action={EditMeetingAction} encType="multipart/form-data" className="p-6 space-y-5">
+        <ConfirmationForm 
+          action={EditMeetingAction} 
+          encType="multipart/form-data" 
+          message="Are you sure you want to update this meeting record?"
+          className="p-6 space-y-5"
+        >
           
           {/* Hidden Fields */}
           <input type="hidden" name="MeetingID" value={data?.MeetingID} />
@@ -141,7 +147,7 @@ export default async function EditMeeting({
               Update Record
             </button>
           </div>
-        </form>
+        </ConfirmationForm>
       </div>
     </div>
   );

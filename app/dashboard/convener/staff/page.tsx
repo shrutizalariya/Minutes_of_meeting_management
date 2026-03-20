@@ -12,6 +12,7 @@ import {
   Filter,
   ArrowLeft
 } from "lucide-react";
+import InviteStaffButton from "./InviteStaffButton";
 
 export default async function StaffPage({
   searchParams,
@@ -36,7 +37,7 @@ export default async function StaffPage({
     ]
   };
 
-  const [staffList, totalRecords] = await Promise.all([
+  const [staffList, totalRecords, upcomingMeetings] = await Promise.all([
     prisma.staff.findMany({
       where,
       include: { user: true },
@@ -44,7 +45,17 @@ export default async function StaffPage({
       skip: (currentPage - 1) * pageSize,
       orderBy: { StaffName: "asc" }
     }),
-    prisma.staff.count({ where })
+    prisma.staff.count({ where }),
+    prisma.meetings.findMany({
+      where: {
+        AND: [
+          { MeetingDate: { gte: new Date() } },
+          { IsCancelled: false }
+        ]
+      },
+      include: { meetingtype: true },
+      orderBy: { MeetingDate: "asc" }
+    })
   ]);
 
   const totalPages = Math.ceil(totalRecords / pageSize);
@@ -146,9 +157,11 @@ export default async function StaffPage({
                  </div>
               </div>
 
-              <button className="w-full mt-8 py-3.5 bg-slate-50 text-slate-400 group-hover:bg-[#0B1324] group-hover:text-white rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all duration-300">
-                 Invite to Meeting
-              </button>
+              <InviteStaffButton 
+                staffId={s.StaffID} 
+                staffName={s.StaffName} 
+                upcomingMeetings={upcomingMeetings} 
+              />
             </div>
           </div>
         ))}

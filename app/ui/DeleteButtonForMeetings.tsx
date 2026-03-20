@@ -1,8 +1,8 @@
 "use client";
 
-import React from "react";
 import { Trash2 } from "lucide-react";
 import { DeleteMeetingAction } from "../actions/DeleteMeetingAction";
+import { useToast } from "./Toast";
 
 interface DeleteButtonProps {
   id: number;
@@ -11,13 +11,30 @@ interface DeleteButtonProps {
 }
 
 function DeleteButtonForMeetings({ id, className, iconClassName }: DeleteButtonProps) {
+  const { showToast } = useToast();
+
+  const handleDelete = async () => {
+    if (window.confirm("Are you sure you want to delete this meeting? This action cannot be undone.")) {
+      try {
+        const result = await DeleteMeetingAction(id);
+        // DeleteMeetingAction redirects on success, but if it returns an error object:
+        if (result && !result.success) {
+           showToast(result.error || "Failed to delete meeting", "error");
+        }
+        // Success toast will be handled by the redirect triggering ToastTrigger if it stays on same page or similar
+      } catch (error) {
+        showToast("An unexpected error occurred", "error");
+      }
+    }
+  };
+
   return (
     <button
-      onClick={() => DeleteMeetingAction(id)}
-      className={`flex items-center justify-center p-2 rounded-lg transition hover:bg-red-100 ${className}`}
+      onClick={handleDelete}
+      className={`flex items-center justify-center p-2 rounded-lg transition hover:bg-red-50 group ${className}`}
       title="Delete Meeting"
     >
-      <Trash2 className={`text-red-600 ${iconClassName || "w-5 h-5"}`} />
+      <Trash2 className={`${iconClassName || "w-4 h-4 text-red-500 hover:text-red-700"} transition-colors`} />
     </button>
   );
 }

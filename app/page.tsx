@@ -52,10 +52,11 @@ export default function LoginPage() {
     }
 
     // Role Redirect
-    if(data.user.role === "admin"){
+    const userRole = data.user.role?.toLowerCase();
+    if(userRole === "admin"){
       router.push("/dashboard/admin");
     }
-    else if(data.user.role === "staff"){
+    else if(userRole === "staff"){
       router.push("/dashboard/staff");
     }
     else{

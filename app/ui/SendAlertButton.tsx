@@ -5,7 +5,21 @@ import { Mail, Loader2, CheckCircle } from "lucide-react";
 import { sendAttendanceAlert } from "@/app/actions/staffAttendance/SendAlert";
 import { useToast } from "./Toast";
 
-export default function SendAlertButton({ staffID, staffName, staffEmail }: { staffID: number; staffName: string; staffEmail: string }) {
+export default function SendAlertButton({ 
+    staffID, 
+    staffName, 
+    staffEmail,
+    label = "Send Alert",
+    variant = "danger",
+    className = ""
+}: { 
+    staffID: number; 
+    staffName: string; 
+    staffEmail: string;
+    label?: string;
+    variant?: "danger" | "warning";
+    className?: string;
+}) {
     const [loading, setLoading] = useState(false);
     const [showConfirm, setShowConfirm] = useState(false);
     const { showToast } = useToast();
@@ -25,7 +39,7 @@ export default function SendAlertButton({ staffID, staffName, staffEmail }: { st
 
     if (showConfirm) {
         return (
-            <div className="flex items-center gap-2 animate-in fade-in zoom-in duration-200">
+            <div className={`flex items-center gap-2 animate-in fade-in zoom-in duration-200 ${className}`}>
                 <button
                     onClick={handleSend}
                     disabled={loading}
@@ -44,14 +58,21 @@ export default function SendAlertButton({ staffID, staffName, staffEmail }: { st
         );
     }
 
+    const variantStyles = {
+        danger: "bg-rose-50 hover:bg-rose-100 text-rose-600 border-rose-100",
+        warning: "bg-amber-50 hover:bg-amber-100 text-amber-600 border-amber-100",
+    };
+
+    const currentStyle = variantStyles[variant] || variantStyles.danger;
+
     return (
         <button
             onClick={() => setShowConfirm(true)}
             disabled={loading}
-            className="flex items-center gap-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 font-bold py-1.5 px-3 rounded-lg text-[10px] transition-all border border-rose-100 disabled:opacity-50 disabled:cursor-not-allowed uppercase tracking-wider h-[32px]"
+            className={`flex items-center gap-1.5 font-bold py-1.5 px-3 rounded-lg text-[10px] transition-all border disabled:opacity-50 disabled:cursor-not-allowed uppercase tracking-wider h-[32px] ${currentStyle} ${className}`}
         >
             <Mail size={12} />
-            Send Alert
+            {label}
         </button>
     );
 }

@@ -10,6 +10,9 @@ import {
   CheckSquare,
   LogOut,
 } from "lucide-react";
+import LogoutButton from "@/app/ui/LogoutButton";
+
+import { prisma } from "@/lib/prisma";
 
 export default async function StaffLayout({
   children,
@@ -26,18 +29,26 @@ export default async function StaffLayout({
   if (token) {
     const payload: any = await verifyToken(token.value);
 
-    if (payload?.email) {
+    if (payload?.id) {
       userId = payload.id;
-      const email = payload.email;
-      const namePart = email.split("@")[0];
-      const formattedName = namePart
-        .replace(/[0-9]/g, "")
-        .split(/[._]/)
-        .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1))
-        .join(" ");
+      
+      // Fetch official staff name from database
+      const staff = await prisma.staff.findUnique({
+        where: { UserID: userId },
+        select: { StaffName: true }
+      });
 
-      userName = formattedName;
-      initial = formattedName.charAt(0).toUpperCase();
+      if (staff?.StaffName) {
+        userName = staff.StaffName;
+      } else if (payload.email) {
+        const namePart = payload.email.split("@")[0];
+        userName = namePart
+          .replace(/[0-9]/g, "")
+          .split(/[._]/)
+          .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1))
+          .join(" ");
+      }
+      initial = userName.charAt(0).toUpperCase();
     }
   }
 
@@ -66,32 +77,30 @@ export default async function StaffLayout({
         {/* User Info */}
         <div className="p-6 border-t border-slate-800">
 
-          <div className="flex items-center gap-3 px-4 py-3 bg-slate-800/50 rounded-xl mb-4">
+          <div className="flex items-center gap-3 px-4 py-3 bg-slate-800/50 rounded-xl mb-4 overflow-hidden">
 
             {/* Avatar */}
-            <div className="h-8 w-8 rounded-full bg-emerald-500 flex items-center justify-center text-[10px] font-bold text-white uppercase">
+            <div className="h-8 w-8 rounded-full bg-emerald-500 flex items-center justify-center text-[10px] font-bold text-white uppercase flex-shrink-0">
               {initial}
             </div>
 
             {/* Name */}
-            <div className="overflow-hidden">
+            <div className="overflow-hidden min-w-0">
               <p className="text-xs font-bold text-white truncate">
                 {userName}
               </p>
 
-              <p className="text-[10px] text-slate-400 uppercase font-medium">
-                Staff
+              <p className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">
+                Staff Account
               </p>
             </div>
 
           </div>
 
           {/* Logout */}
-          <form action="/api/logout" method="POST">
-            <button type="submit" className="flex items-center gap-3 text-slate-400 hover:text-white transition-colors text-sm font-medium w-full px-4 bg-transparent border-none cursor-pointer">
-              <LogOut size={18} /> Sign Out
-            </button>
-          </form>
+          <LogoutButton className="flex items-center gap-3 text-slate-400 hover:text-white transition-colors text-sm font-bold w-full px-4 py-2 text-left border-none bg-transparent cursor-pointer group">
+            <LogOut size={18} className="group-hover:translate-x-1 transition-transform" /> <span>Sign Out</span>
+          </LogoutButton>
 
         </div>
 

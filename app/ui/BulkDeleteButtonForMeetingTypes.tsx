@@ -2,28 +2,31 @@
 
 import { Trash2 } from "lucide-react";
 import { BulkDeleteMeetingTypesAction } from "@/app/actions/meetingtype/BulkDelete";
+import { useToast } from "@/app/ui/Toast";
 
 export default function BulkDeleteButtonForMeetingTypes() {
+    const { showToast } = useToast();
     const handleDelete = async () => {
         const checkboxes = document.querySelectorAll<HTMLInputElement>(".row-checkbox:checked");
         const ids = Array.from(checkboxes).map((cb) => Number(cb.value));
 
         if (ids.length === 0) {
-            alert("Please select at least one type to delete.");
+            showToast("Please select at least one type to delete.", "error");
             return;
         }
 
-        if (confirm(`Delete ${ids.length} selected meeting type(s)?`)) {
+        if (window.confirm(`Are you sure you want to delete ${ids.length} selected meeting type(s)?`)) {
             const result = await BulkDeleteMeetingTypesAction(ids);
 
             if (result.success) {
+                showToast(`${ids.length} meeting type(s) deleted successfully.`, "success");
                 checkboxes.forEach((cb) => {
                     cb.checked = false;
                 });
                 const master = document.getElementById("master-checkbox") as HTMLInputElement | null;
                 if (master) master.checked = false;
             } else {
-                alert("Something went wrong during deletion.");
+                showToast("Something went wrong during deletion.", "error");
             }
         }
     };

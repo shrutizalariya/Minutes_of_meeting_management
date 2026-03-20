@@ -10,6 +10,7 @@ import {
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer 
 } from "recharts";
+import DashboardAttendanceModal from "./DashboardAttendanceModal";
 
 interface InitialData {
   kpis: {
@@ -22,6 +23,8 @@ interface InitialData {
   meetingTypes: string[];
   notifications: any[];
   chartData: any[];
+  chartMonth: number;
+  chartYear: number;
 }
 
 export default function ConvenerDashboardClient({ initialData }: { initialData: InitialData }) {
@@ -29,6 +32,20 @@ export default function ConvenerDashboardClient({ initialData }: { initialData: 
   const [filterType, setFilterType] = useState("");
   const [filterStatus, setFilterStatus] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedMeeting, setSelectedMeeting] = useState<any>(null);
+  const [attendanceModalOpen, setAttendanceModalOpen] = useState(false);
+
+  const months = [
+    "January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December"
+  ];
+  const years = Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - i);
+
+  const handleChartUpdate = (name: string, value: string) => {
+    const params = new URLSearchParams(window.location.search);
+    params.set(name, value);
+    window.location.href = `?${params.toString()}#presence-analysis`;
+  };
 
   const filteredMeetings = meetings.filter(m => {
     return (filterType === "" || m.type === filterType) &&
@@ -103,27 +120,6 @@ export default function ConvenerDashboardClient({ initialData }: { initialData: 
         {/* Left Column (Main Content) */}
         <div className="xl:col-span-2 space-y-8">
           
-          {/* 3. Quick Actions */}
-          <section className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.02)]">
-            <h2 className="text-xs font-black uppercase tracking-[0.2em] text-slate-400 mb-6 flex items-center gap-2">
-               <Zap size={16} className="text-indigo-600" />
-               Express Operations
-            </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              <ActionButton 
-                label="Upload Docs" 
-                icon={<FileUp size={18} />} 
-                href="/dashboard/convener/meetings" 
-              />
-              <ActionButton 
-                label="Attendance Report" 
-                icon={<BarChart3 size={18} />} 
-                href="/dashboard/convener/attendance" 
-              />
-            </div>
-          </section>
-
-          {/* 2 & 7. Upcoming Meetings Table with Filters */}
           <section className="bg-white rounded-[2rem] border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.02)] overflow-hidden">
             <div className="px-6 py-5 border-b border-slate-50 bg-white">
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
@@ -133,7 +129,6 @@ export default function ConvenerDashboardClient({ initialData }: { initialData: 
                 </h2>
                 
                 <div className="flex flex-wrap items-center gap-3">
-                  {/* Search */}
                   <div className="relative">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
                     <input 
@@ -145,7 +140,6 @@ export default function ConvenerDashboardClient({ initialData }: { initialData: 
                     />
                   </div>
 
-                  {/* Filter Type */}
                   <select 
                     className="bg-slate-50 border-none rounded-xl text-xs font-bold px-4 py-2 focus:ring-2 focus:ring-indigo-500 outline-none appearance-none cursor-pointer"
                     value={filterType}
@@ -155,7 +149,6 @@ export default function ConvenerDashboardClient({ initialData }: { initialData: 
                     {initialData.meetingTypes.map(t => <option key={t} value={t}>{t}</option>)}
                   </select>
 
-                  {/* Filter Status */}
                   <select 
                     className="bg-slate-50 border-none rounded-xl text-xs font-bold px-4 py-2 focus:ring-2 focus:ring-indigo-500 outline-none appearance-none cursor-pointer"
                     value={filterStatus}
@@ -184,7 +177,7 @@ export default function ConvenerDashboardClient({ initialData }: { initialData: 
                     <tr key={m.id} className="hover:bg-indigo-50/20 transition-colors group">
                       <td className="px-8 py-6">
                         <div className="flex flex-col">
-                          <span className="text-sm font-bold text-slate-800 group-hover:text-indigo-600 transition-colors">#{m.id} - {m.type}</span>
+                          <span className="text-sm font-bold text-slate-800 group-hover:text-indigo-600 transition-colors uppercase tracking-tight">#{m.id} - {m.type}</span>
                           <span className="text-[10px] text-slate-400 font-bold mt-1 uppercase tracking-tighter italic">Loc: {m.location}</span>
                         </div>
                       </td>
@@ -198,9 +191,15 @@ export default function ConvenerDashboardClient({ initialData }: { initialData: 
                       </td>
                       <td className="px-8 py-6">
                         <div className="flex items-center justify-end gap-2">
-                           <ActionIcon icon={<Eye size={14} />} tooltip="View" />
-                           <ActionIcon icon={<Edit size={14} />} tooltip="Edit" />
-                           <ActionIcon icon={<UserCheck size={14} />} tooltip="Attendance" />
+                           <a href={`/dashboard/convener/meetings/${m.id}`} title="View"><ActionIcon icon={<Eye size={14} />} tooltip="View" /></a>
+                           <a href={`/dashboard/convener/meetings/edit/${m.id}`} title="Edit"><ActionIcon icon={<Edit size={14} />} tooltip="Edit" /></a>
+                           <button 
+                             onClick={() => { setSelectedMeeting(m); setAttendanceModalOpen(true); }}
+                             className="p-0 bg-transparent border-none cursor-pointer"
+                             title="Mark Attendance"
+                           >
+                             <ActionIcon icon={<UserCheck size={14} />} tooltip="Attendance" />
+                           </button>
                            <ActionIcon icon={<XCircle size={14} />} tooltip="Cancel" red />
                         </div>
                       </td>
@@ -218,14 +217,28 @@ export default function ConvenerDashboardClient({ initialData }: { initialData: 
             </div>
           </section>
 
-          {/* 4. Attendance Overview Chart */}
-          <section className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.02)]">
-             <div className="flex items-center justify-between mb-8 px-2">
+          <section id="presence-analysis" className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.02)] scroll-mt-6">
+             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 px-2 gap-4">
                 <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
                   <Activity size={18} className="text-indigo-600" />
-                  Presence Analytics
+                  Presence Analysis
                 </h2>
-                <span className="text-[10px] font-black uppercase text-slate-300 tracking-[0.2em]">Efficiency Flow</span>
+                <div className="flex items-center gap-2">
+                   <select 
+                     value={initialData.chartMonth}
+                     onChange={(e) => handleChartUpdate("chartMonth", e.target.value)}
+                     className="bg-slate-50 border-none rounded-xl text-[10px] font-black uppercase px-3 py-2 focus:ring-2 focus:ring-indigo-500 outline-none cursor-pointer"
+                   >
+                     {months.map((m, i) => <option key={m} value={i + 1}>{m}</option>)}
+                   </select>
+                   <select 
+                     value={initialData.chartYear}
+                     onChange={(e) => handleChartUpdate("chartYear", e.target.value)}
+                     className="bg-slate-50 border-none rounded-xl text-[10px] font-black uppercase px-3 py-2 focus:ring-2 focus:ring-indigo-500 outline-none cursor-pointer"
+                   >
+                     {years.map(y => <option key={y} value={y}>{y}</option>)}
+                   </select>
+                </div>
              </div>
              <div className="h-[300px] w-full px-2">
                 <ResponsiveContainer width="100%" height="100%">
@@ -260,7 +273,6 @@ export default function ConvenerDashboardClient({ initialData }: { initialData: 
         {/* Right Column (Sidebar Elements) */}
         <div className="space-y-8">
           
-          {/* 6. Mini Calendar Preview Component */}
           <section className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.02)]">
             <h2 className="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2 px-2">
                <LayoutDashboard size={18} className="text-indigo-600" />
@@ -287,11 +299,17 @@ export default function ConvenerDashboardClient({ initialData }: { initialData: 
                </a>
             </div>
           </section>
-
-
         </div>
 
       </div>
+
+      {attendanceModalOpen && selectedMeeting && (
+        <DashboardAttendanceModal 
+          meetingId={selectedMeeting.id} 
+          meetingTitle={selectedMeeting.type} 
+          onClose={() => { setAttendanceModalOpen(false); setSelectedMeeting(null); }} 
+        />
+      )}
     </div>
   );
 }

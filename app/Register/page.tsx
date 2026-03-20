@@ -151,8 +151,8 @@ export default function RegisterPage() {
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-gray-400 outline-none transition-all cursor-pointer"
             >
               <option value="">Select Role</option>
-              <option value="Staff">Staff</option>
-              <option value="MeetingConvener">Meeting Convener</option>
+              <option value="staff">Staff</option>
+              <option value="meetingconvener">Meeting Convener</option>
             </select>
           </div>
 
@@ -227,32 +227,6 @@ export default function RegisterPage() {
         </form>
 
 
-        {/* Divider */}
-        <div className="relative my-6">
-          <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-gray-200"></div>
-          </div>
-          <div className="relative flex justify-center text-sm">
-            <span className="px-4 bg-white text-gray-500">
-              Or join with social
-            </span>
-          </div>
-        </div>
-
-
-        {/* Google Signup Parity */}
-        <button
-          type="button"
-          className="w-full flex justify-center items-center gap-3 border border-gray-300 py-3 rounded-lg hover:bg-gray-50 transition"
-        >
-          <svg className="w-5 h-5" viewBox="0 0 533.5 544.3">
-            <path fill="#4285f4" d="M533.5 278.4c0-17.6-1.6-34.5-4.6-51H272v96.6h146.9c-6.4 33-25.5 60.9-54.4 79.6v65h87.9c51.6-47.5 81.1-117.6 81.1-190.2z" />
-            <path fill="#34a853" d="M272 544.3c73.8 0 135.7-24.5 180.9-66.6l-87.9-65c-24.4 16.4-55.5 26-93 26-71.4 0-131.9-48.1-153.5-112.6H30.1v70.9C75.6 492.3 167 544.3 272 544.3z" />
-            <path fill="#fbbc05" d="M118.5 328.6c-9-26.5-9-55.1 0-81.6V176H30.1c-39.8 77.8-39.8 170.6 0 248.4l88.4-70.8z" />
-            <path fill="#ea4335" d="M272 107.3c39.8-.6 77.2 14 105.9 40.7l79.2-79.2C407.4 26.2 342.6-1.8 272 0 167 0 75.6 52 30.1 144.7l88.4 70.9c21.6-64.5 82.1-112.3 153.5-112.3z" />
-          </svg>
-          Sign up with Google
-        </button>
 
 
         {/* Login Link */}

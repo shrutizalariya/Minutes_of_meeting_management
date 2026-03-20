@@ -128,5 +128,7 @@ export async function EditMeetingAction(formData: FormData) {
   revalidatePath("/dashboard/convener/archive");
 
   const redirectTo = formData.get("redirectTo") as string;
-  redirect(redirectTo || "/dashboard/admin/meetings");
+  const target = redirectTo || "/dashboard/admin/meetings";
+  const separator = target.includes("?") ? "&" : "?";
+  redirect(`${target}${separator}success=Meeting+Updated+Successfully`);
 }

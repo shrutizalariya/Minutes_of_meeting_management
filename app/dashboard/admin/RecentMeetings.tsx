@@ -2,7 +2,7 @@ import { prisma } from "@/lib/prisma";
 import MeetingRow from "@/app/components/admindashboard/MeetingRow";
 import Link from "next/link";
 
-export default async function RecentMeetings() {
+export default async function RecentMeetings({ showActions = true }: { showActions?: boolean }) {
   const meetings = await prisma.meetings.findMany({
     orderBy: { MeetingDate: "desc" },
     take: 5,
@@ -19,7 +19,7 @@ export default async function RecentMeetings() {
               <th className="px-6 py-4">Category</th>
               <th className="px-6 py-4">Venue</th>
               <th className="px-6 py-4 text-right">Status</th>
-              <th className="px-6 py-4 text-right">Actions</th>
+              {showActions && <th className="px-6 py-4 text-right">Actions</th>}
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-50">
@@ -31,8 +31,9 @@ export default async function RecentMeetings() {
                 title={meeting.MeetingDescription || "No description"}
                 date={new Date(meeting.MeetingDate).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
                 type={meeting.meetingtype?.MeetingTypeName || "General"}
-                location={meeting.Location || "TBD"}
+                location={meeting.Location || "Corporate HQ"}
                 status={meeting.Status}
+                showActions={showActions}
               />
             ))}
           </tbody>

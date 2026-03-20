@@ -30,7 +30,7 @@ export async function POST(req: Request) {
       data: {
         Email: email,
         Password: hash,
-        Role: body.role ?? "user", // fallback role
+        Role: (body.role as string || "user").toLowerCase(), // fallback role
       },
     });
 

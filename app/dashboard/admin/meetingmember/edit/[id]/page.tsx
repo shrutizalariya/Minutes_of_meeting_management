@@ -3,6 +3,7 @@ import Link from "next/link";
 import React from "react";
 import { EditMeetingMemberAction } from "@/app/actions/meetingmember/EditMeetingMemberAction";
 import { Users, Calendar, FileText, CheckCircle2, ArrowLeft, Save } from "lucide-react";
+import ConfirmationForm from "@/app/components/ConfirmationForm";
 
 async function EditMeetingMember({
   params,
@@ -54,7 +55,11 @@ async function EditMeetingMember({
           </div>
         </div>
 
-        <form action={EditMeetingMemberAction} className="p-6 space-y-5">
+        <ConfirmationForm 
+          action={EditMeetingMemberAction} 
+          message="Are you sure you want to update this member record?"
+          className="p-6 space-y-5"
+        >
           <input type="hidden" name="MeetingMemberID" value={meetingMember.MeetingMemberID} />
 
           <div className="space-y-5">
@@ -136,7 +141,7 @@ async function EditMeetingMember({
               Update Record
             </button>
           </div>
-        </form>
+        </ConfirmationForm>
       </div>
     </div>
   );

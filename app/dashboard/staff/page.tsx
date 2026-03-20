@@ -55,6 +55,7 @@ export default async function StaffDashboardPage() {
   }
 
   const dashboardData = await getStaffDashboard(staff.StaffID);
+  const staffName = staff.StaffName;
 
-  return <StaffDashboard {...dashboardData} />;
+  return <StaffDashboard {...dashboardData} staffName={staffName} />;
 }

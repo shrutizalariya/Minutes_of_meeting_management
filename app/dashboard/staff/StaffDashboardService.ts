@@ -163,7 +163,7 @@ export async function getStaffDashboard(staffId: number): Promise<StaffDashboard
   const schedMeetings = meetingAssignments
     .filter(m => m.meetings && new Date(m.meetings.MeetingDate) >= today)
     .map(m => ({
-      MeetingID: m.MeetingMemberID,
+      MeetingID: m.meetings!.MeetingID,
       MeetingDate: m.meetings!.MeetingDate.toISOString(),
       MeetingDescription: m.meetings!.MeetingDescription ?? undefined,
       Location: m.meetings!.Location ?? undefined,
@@ -177,7 +177,7 @@ export async function getStaffDashboard(staffId: number): Promise<StaffDashboard
   const schedEvents = eventAssignments
     .filter(e => e.events && new Date(e.events.EventDate) >= today)
     .map(e => ({
-      MeetingID: e.EventMemberID,
+      MeetingID: e.events!.EventID,
       MeetingDate: e.events!.EventDate.toISOString(),
       MeetingDescription: e.events!.EventDescription ?? undefined,
       Location: e.events!.Location ?? undefined,

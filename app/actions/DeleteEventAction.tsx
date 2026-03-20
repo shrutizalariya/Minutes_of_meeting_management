@@ -5,22 +5,22 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 export async function DeleteEventAction(id: number) {
-  let isSuccessful = false;
-
   try {
+    // Delete related members first
+    await prisma.eventmember.deleteMany({
+      where: { EventID: id },
+    });
+
     await prisma.events.delete({
       where: { EventID: id },
     });
-    isSuccessful = true;
+    revalidatePath("/dashboard/admin/events");
   } catch (error) {
     console.error("Database Delete Error:", error);
-    return { message: "Database Error: Failed to Delete Event." };
+    return { error: "Database Error: Failed to Delete Event." };
   }
 
-  if (isSuccessful) {
-    revalidatePath("/dashboard/admin/events");
-    redirect("/dashboard/admin/events");
-  }
+  redirect("/dashboard/admin/events?success=Event+Deleted+Successfully");
 }
 
 

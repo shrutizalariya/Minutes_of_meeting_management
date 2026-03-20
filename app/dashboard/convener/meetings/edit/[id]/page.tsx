@@ -3,6 +3,7 @@ import Link from "next/link";
 import React from "react";
 import { Calendar, Tag, FileText, ArrowLeft, Edit, Target, Mic2 } from "lucide-react";
 import { EditMeetingAction } from "@/app/actions/EditMeetingAction";
+import ConfirmationForm from "@/app/components/ConfirmationForm";
 
 export default async function ConvenerEditMeetingPage({
   params,
@@ -57,7 +58,11 @@ export default async function ConvenerEditMeetingPage({
         </div>
 
         {/* Form */}
-        <form action={EditMeetingAction} className="p-10 space-y-8">
+        <ConfirmationForm 
+          action={EditMeetingAction} 
+          message="Are you sure you want to update this meeting record?"
+          className="p-10 space-y-8"
+        >
           <input type="hidden" name="MeetingID" value={meeting.MeetingID} />
           <input type="hidden" name="OldDocumentPath" value={meeting.DocumentPath || ""} />
           <input type="hidden" name="redirectTo" value="/dashboard/convener/meetings" />
@@ -151,7 +156,7 @@ export default async function ConvenerEditMeetingPage({
               Update Record
             </button>
           </div>
-        </form>
+        </ConfirmationForm>
       </div>
     </div>
   );

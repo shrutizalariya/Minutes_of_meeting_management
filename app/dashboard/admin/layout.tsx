@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   LayoutDashboard, FileText, Users, Settings,
   Bell, Search, ChevronRight, LogOut, Command,
@@ -9,10 +9,13 @@ import {
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import LogoutButton from "@/app/ui/LogoutButton";
-import NotificationBellWrapper from "@/app/components/admindashboard/NotificationBellWrapper";
+import { globalSearch } from "@/app/actions/search/GlobalSearch";
+import { getUserSettings } from "@/app/actions/user/UpdateProfile";
+import AdminNotificationBell from "@/app/components/admindashboard/AdminNotificationBell";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const [search, setSearch] = useState("");
+  const [profile, setProfile] = useState<any>(null);
   const pathname = usePathname();
 
   const isActive = (path: string) => {
@@ -21,6 +24,28 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     }
     return pathname.startsWith(path);
   };
+
+  useEffect(() => {
+    async function fetchProfile() {
+      try {
+        const res = await fetch("/api/auth/me");
+        if (res.ok) {
+          const data = await res.json();
+          setProfile(data);
+        } else {
+          // Fallback to demo admin if needed
+          setProfile({ name: "Admin User", role: "System Admin", initials: "AD", id: 1 });
+        }
+      } catch (e) {
+        console.error("Failed to fetch profile:", e);
+      }
+    }
+    fetchProfile();
+  }, []);
+
+  const adminName = profile?.name || "Admin User";
+  const adminInitials = profile?.initials || (profile?.name ? profile.name.split(" ").map((n: string) => n[0]).join("") : "AD");
+  const adminRole = profile?.role || "System Admin";
 
   return (
     <div className="min-h-screen bg-[#F4F7FE] flex text-slate-900 selection:bg-blue-100" style={{ fontFamily: "'Sora', sans-serif" }}>
@@ -86,16 +111,18 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </nav>
 
         <div className="p-6 border-t border-slate-800">
-          <div className="flex items-center gap-3 px-4 py-3 bg-slate-800/50 rounded-xl mb-4">
-            <div className="h-8 w-8 rounded-xl bg-blue-500 flex items-center justify-center text-[10px] font-black text-white">AD</div>
-            <div className="overflow-hidden">
-              <p className="text-xs font-bold text-white truncate">Admin User</p>
-              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">System Admin</p>
+          <div className="flex items-center gap-3 px-4 py-3 bg-slate-800/50 rounded-xl mb-4 overflow-hidden">
+            <div className="h-8 w-8 rounded-xl bg-blue-500 flex items-center justify-center text-[10px] font-black text-white flex-shrink-0">
+              {adminInitials}
+            </div>
+            <div className="overflow-hidden min-w-0">
+              <p className="text-xs font-bold text-white truncate">{adminName}</p>
+              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider truncate">{adminRole}</p>
             </div>
           </div>
-          <button className="flex items-center gap-3 text-slate-400 hover:text-white transition-colors text-sm font-bold w-full px-4 text-left border-none bg-transparent cursor-pointer">
-            <LogOut size={18} /> <LogoutButton />
-          </button>
+          <LogoutButton className="flex items-center gap-3 text-slate-400 hover:text-white transition-colors text-sm font-bold w-full px-4 py-2 text-left border-none bg-transparent cursor-pointer group">
+            <LogOut size={18} className="group-hover:scale-110 transition-transform" /> <span>Sign Out</span>
+          </LogoutButton>
         </div>
       </aside>
 
@@ -103,23 +130,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       <div className="flex-1 ml-64 flex flex-col min-w-0">
         <header className="h-20 bg-white/80 backdrop-blur-md border-b border-slate-200 sticky top-0 z-40 px-10 flex items-center justify-between">
           <form
-            onSubmit={async (e) => {
-              e.preventDefault();
-              if (!search.trim()) return;
-
-              const formData = new FormData();
-              formData.set("q", search);
-
-              // We use a window.location reset to ensure a fresh search 
-              // but the server action will handle the logic.
-              // Note: redirect() in server actions works via throw, 
-              // but here we are calling it as a function.
-              // To make it simple for the user, I'll just use a GET redirect to a search route 
-              // that runs the logic, or call it here.
-
-              // Better: Redirect to a dedicated search route that handles the logic on the server side
-              window.location.href = `/dashboard/admin/search?q=${encodeURIComponent(search)}`;
-            }}
+            action={globalSearch}
             className="relative w-96 group"
           >
             <Search
@@ -128,6 +139,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             />
 
             <input
+              name="q"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="w-full bg-slate-100/50 border-none rounded-xl py-2.5 pl-10 pr-4 text-sm focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
@@ -136,11 +148,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </form>
 
           <div className="flex items-center gap-4">
-            <NotificationBellWrapper />
+            {profile?.id && (
+              <AdminNotificationBell userId={profile.id} />
+            )}
             <div className="h-8 w-[1px] bg-slate-200 mx-2" />
             <div className="flex items-center gap-3 px-1 py-1 pr-3 bg-slate-50 rounded-full border border-slate-100">
-              <div className="h-8 w-8 rounded-full bg-white shadow-sm flex items-center justify-center text-[10px] font-black text-blue-600">AD</div>
-              <span className="text-xs font-bold text-slate-700">Admin</span>
+              <div className="h-8 w-8 rounded-full bg-white shadow-sm flex items-center justify-center text-[10px] font-black text-blue-600">
+                {adminInitials}
+              </div>
+              <span className="text-xs font-bold text-slate-700 truncate max-w-[100px]">{adminName.split(" ")[0]}</span>
             </div>
           </div>
         </header>

@@ -29,6 +29,8 @@ export async function clearNotifications() {
         revalidatePath("/dashboard/admin/notifications");
         revalidatePath("/dashboard/staff");
         revalidatePath("/dashboard/staff/notifications");
+        revalidatePath("/dashboard/convener");
+        revalidatePath("/dashboard/convener/notifications");
         return { success: true };
     } catch (error) {
         console.error("Clear notifications error:", error);
@@ -45,6 +47,8 @@ export async function markAsRead(id: number) {
         revalidatePath("/dashboard/admin/notifications");
         revalidatePath("/dashboard/staff");
         revalidatePath("/dashboard/staff/notifications");
+        revalidatePath("/dashboard/convener");
+        revalidatePath("/dashboard/convener/notifications");
         return { success: true };
     } catch (error) {
         return { success: false };
@@ -67,6 +71,8 @@ export async function markAllAsRead(userId?: number) {
         revalidatePath("/dashboard/admin/notifications");
         revalidatePath("/dashboard/staff");
         revalidatePath("/dashboard/staff/notifications");
+        revalidatePath("/dashboard/convener");
+        revalidatePath("/dashboard/convener/notifications");
         return { success: true };
     } catch (error) {
         return { success: false };

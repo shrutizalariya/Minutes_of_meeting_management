@@ -3,6 +3,7 @@ import React from "react";
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { Calendar, Tag, FileText, ArrowLeft, Plus, Target, Mic2 } from "lucide-react"; 
+import ConfirmationForm from "@/app/components/ConfirmationForm";
 
 export default async function AddMeeting() {
   const m = await prisma.meetingtype.findMany({
@@ -31,7 +32,12 @@ export default async function AddMeeting() {
         </div>
 
         {/* Form Body */}
-        <form action={AddMeetingAction} className="p-10 space-y-8">
+        <ConfirmationForm 
+          action={AddMeetingAction} 
+          message="Are you sure you want to schedule this new meeting?"
+          className="p-10 space-y-8"
+        >
+          <input type="hidden" name="redirectTo" value="/dashboard/convener/meetings" />
           
           <div className="space-y-6">
             {/* Meeting Date */}
@@ -117,7 +123,7 @@ export default async function AddMeeting() {
               Save Record
             </button>
           </div>
-        </form>
+        </ConfirmationForm>
       </div>
     </div>
   );

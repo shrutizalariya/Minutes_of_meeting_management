@@ -55,8 +55,48 @@ export async function AddMeetingMemberAction(formData: FormData) {
     }
   });
 
+  // 5. Notify Meeting Conveners if staff is absent
+  if (!isPresent) {
+    const conveners = await prisma.users.findMany({
+      where: { Role: "Meeting Convener" },
+      select: { Id: true }
+    });
+
+    const meeting = await prisma.meetings.findUnique({
+      where: { MeetingID: meetingId },
+      include: { meetingtype: true }
+    });
+
+    const staffName = await prisma.staff.findUnique({
+      where: { StaffID: staffId },
+      select: { StaffName: true }
+    });
+
+    if (meeting && staffName) {
+      await Promise.all(conveners.map(c => 
+        prisma.notification.create({
+          data: {
+            UserID: c.Id,
+            Type: "alert",
+            Title: "Staff Absentee Alert",
+            Message: `${staffName.StaffName} is marked ABSENT for ${meeting.MeetingDescription || meeting.meetingtype.MeetingTypeName} on ${new Date(meeting.MeetingDate).toLocaleDateString()}`,
+            Time: "Just now",
+            Color: "rose",
+            IsNew: true
+          }
+        })
+      ));
+    }
+  }
+
   revalidatePath("/dashboard/admin/meetingmember");
   revalidatePath("/dashboard/staff/meetings");
   revalidatePath("/dashboard/staff/notifications");
-  redirect("/dashboard/admin/meetingmember");
+  revalidatePath("/dashboard/convener/staff");
+  revalidatePath("/dashboard/convener");
+
+  const redirectTo = formData.get("redirectTo") as string;
+  const target = redirectTo || "/dashboard/admin/meetingmember";
+  const separator = target.includes("?") ? "&" : "?";
+  redirect(`${target}${separator}success=Member+Record+Saved+Successfully`);
 }

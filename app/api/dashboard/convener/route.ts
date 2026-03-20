@@ -39,7 +39,12 @@ export async function GET() {
       include: {
         _count: { select: { meetingmember: true } },
         meetingmember: {
-          where: { Remarks: { not: null, not: "" } }
+          where: { 
+            AND: [
+              { Remarks: { not: null } },
+              { Remarks: { not: "" } }
+            ]
+          }
         }
       }
     });
@@ -47,7 +52,10 @@ export async function GET() {
     // 3. Recent Assignments (from MeetingMember Remarks)
     const recentAssignments = await prisma.meetingmember.findMany({
       where: {
-        Remarks: { not: null, not: "" }
+        AND: [
+          { Remarks: { not: null } },
+          { Remarks: { not: "" } }
+        ]
       },
       include: {
         staff: true,
@@ -60,6 +68,7 @@ export async function GET() {
     // Formatting Data for Frontend
     return NextResponse.json({
       userProfile: {
+        id: user.Id,
         name: user.Name || "Convener",
         email: user.Email,
         role: user.Role,

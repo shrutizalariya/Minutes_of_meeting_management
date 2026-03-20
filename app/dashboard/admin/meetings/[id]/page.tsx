@@ -44,8 +44,8 @@ async function GetById({ params }: { params: Promise<{ id: number }> }) {
   }];
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-6">
-      <div className="w-full max-w-lg bg-white rounded-3xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.08)] border border-slate-100 overflow-hidden">
+    <div className="py-10 px-6">
+      <div className="w-full max-w-2xl mx-auto bg-white rounded-3xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.06)] border border-slate-100 overflow-hidden">
 
         {/* Header Section */}
         <div className="px-6 py-5 border-b border-slate-50 flex items-center justify-between bg-white">

@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { EditStaffAction } from "@/app/actions/staff/EditStaffAction";
 import { User, Phone, Mail, Shield, ArrowLeft, Save, FileText } from "lucide-react";
+import ConfirmationForm from "@/app/components/ConfirmationForm";
 
 // Helper to split country code from number
 function splitMobile(mobile?: string | null) {
@@ -57,7 +58,11 @@ export default async function EditStaffPage({ params }: { params: Promise<{ id: 
           </div>
         </div>
 
-        <form action={EditStaffAction} className="p-6 space-y-5">
+        <ConfirmationForm 
+          action={EditStaffAction} 
+          message="Are you sure you want to update this staff member's information?"
+          className="p-6 space-y-5"
+        >
           <input type="hidden" name="StaffID" value={staff.StaffID} />
 
           <div className="space-y-5">
@@ -167,7 +172,7 @@ export default async function EditStaffPage({ params }: { params: Promise<{ id: 
               Update Member
             </button>
           </div>
-        </form>
+        </ConfirmationForm>
       </div>
     </div>
   );

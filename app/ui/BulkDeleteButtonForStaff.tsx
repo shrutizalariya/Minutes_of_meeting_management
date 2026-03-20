@@ -2,28 +2,31 @@
 
 import { Trash2 } from "lucide-react";
 import { BulkDeleteStaffAction } from "@/app/actions/staff/BulkDelete";
+import { useToast } from "@/app/ui/Toast";
 
 export default function BulkDeleteButtonForStaff() {
+    const { showToast } = useToast();
     const handleDelete = async () => {
         const checkboxes = document.querySelectorAll<HTMLInputElement>(".row-checkbox:checked");
         const ids = Array.from(checkboxes).map((cb) => Number(cb.value));
 
         if (ids.length === 0) {
-            alert("Please select at least one staff member to delete.");
+            showToast("Please select at least one staff member to delete.", "error");
             return;
         }
 
-        if (confirm(`Delete ${ids.length} selected staff member(s)?`)) {
+        if (window.confirm(`Are you sure you want to delete ${ids.length} selected staff member(s)?`)) {
             const result = await BulkDeleteStaffAction(ids);
 
             if (result.success) {
+                showToast(`${ids.length} staff member(s) deleted successfully.`, "success");
                 checkboxes.forEach((cb) => {
                     cb.checked = false;
                 });
                 const master = document.getElementById("master-checkbox") as HTMLInputElement | null;
                 if (master) master.checked = false;
             } else {
-                alert("Something went wrong during deletion.");
+                showToast("Something went wrong during deletion.", "error");
             }
         }
     };

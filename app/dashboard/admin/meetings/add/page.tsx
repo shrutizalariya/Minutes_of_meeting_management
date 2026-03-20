@@ -1,5 +1,6 @@
 import { AddMeetingAction } from "@/app/actions/AddMeetingAction";
 import React from "react";
+import ConfirmationForm from "@/app/components/ConfirmationForm";
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { Calendar, Tag, FileText, ArrowLeft, Plus } from "lucide-react"; 
@@ -27,7 +28,11 @@ export default async function AddMeeting() {
         </div>
 
         {/* Form Body - Reduced padding to p-6 */}
-        <form action={AddMeetingAction} className="p-6 space-y-5">
+        <ConfirmationForm 
+          action={AddMeetingAction} 
+          message="Are you sure you want to schedule this new meeting?"
+          className="p-6 space-y-5"
+        >
           
           {/* Stacked Layout for better spacing in smaller width */}
           <div className="space-y-5">
@@ -111,7 +116,7 @@ export default async function AddMeeting() {
               Save Record
             </button>
           </div>
-        </form>
+        </ConfirmationForm>
       </div>
     </div>
   );

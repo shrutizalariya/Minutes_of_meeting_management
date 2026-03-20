@@ -13,7 +13,11 @@ interface DeleteButtonProps {
 function DeleteButtonForMeetingMember({ id, className, iconClassName }: DeleteButtonProps) {
   return (
     <button
-      onClick={() => DeleteMeetingMemberAction(id)}
+      onClick={() => {
+        if (window.confirm("Are you sure you want to remove this member record?")) {
+          DeleteMeetingMemberAction(id);
+        }
+      }}
       className={`flex items-center justify-center p-2 rounded-lg transition hover:bg-red-100 ${className}`}
       title="Delete Member"
     >

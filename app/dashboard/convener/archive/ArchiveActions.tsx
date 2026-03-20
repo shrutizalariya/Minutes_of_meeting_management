@@ -30,11 +30,12 @@ export default function ArchiveActionButtons({
   const handleCancel = async () => {
     setCancelling(true);
     try {
-      const result = await CancelMeetingAction(meetingId, cancelReason);
+      const result = await (CancelMeetingAction as any)(meetingId, cancelReason);
       if (result.success) {
         setCancelOpen(false);
         setCancelReason("");
-        window.location.reload();
+        // Redirect with success parameter to trigger toast
+        window.location.href = window.location.pathname + "?success=Meeting+Cancelled+Successfully";
       } else {
         alert("Failed to cancel meeting");
       }
@@ -183,7 +184,11 @@ export default function ArchiveActionButtons({
                 Back
               </button>
               <button
-                onClick={handleCancel}
+                onClick={() => {
+                  if (window.confirm("Are you sure you want to cancel this meeting? This action cannot be undone.")) {
+                    handleCancel();
+                  }
+                }}
                 disabled={cancelling}
                 className="px-6 py-3 bg-rose-600 text-white rounded-xl text-xs font-black uppercase tracking-widest hover:bg-rose-700 transition-all border-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               >

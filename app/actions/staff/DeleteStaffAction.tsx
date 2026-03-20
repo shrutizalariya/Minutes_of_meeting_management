@@ -7,7 +7,7 @@ import { redirect } from "next/navigation";
 async function DeleteStaffAction(id:number){
     await prisma.staff.delete({where:{StaffID:id}});
     revalidatePath("/dashboard/admin/staff");
-    redirect("/dashboard/admin/staff");
+    redirect("/dashboard/admin/staff?success=Staff+Member+Deleted+Successfully");
 }
 
 export {DeleteStaffAction};

@@ -47,7 +47,7 @@ export async function EditEventAction(formData: FormData) {
   });
 
   revalidatePath("/dashboard/admin/events");
-  redirect("/dashboard/admin/events");
+  redirect("/dashboard/admin/events?success=Event+Updated+Successfully");
 }
 
 

@@ -1,8 +1,14 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import React from "react";
 
-export default function LogoutButton() {
+interface LogoutButtonProps {
+  className?: string;
+  children?: React.ReactNode;
+}
+
+export default function LogoutButton({ className, children }: LogoutButtonProps) {
   const router = useRouter();
 
   async function handleLogout() {
@@ -16,8 +22,8 @@ export default function LogoutButton() {
   }
 
   return (
-    <button onClick={handleLogout}>
-      Sign Out
+    <button className={className} onClick={handleLogout}>
+      {children || "Sign Out"}
     </button>
   );
 }

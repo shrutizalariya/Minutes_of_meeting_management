@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { User, Bell, Shield, Save, Loader2, CheckCircle2, Lock } from "lucide-react";
+import { useToast } from "@/app/ui/Toast";
 import { updateProfile } from "@/app/actions/user/UpdateProfile";
 import { updateSecurity } from "@/app/actions/user/UpdateSecurity";
 
@@ -16,46 +17,45 @@ interface SettingsFormProps {
 }
 
 export default function SettingsForm({ user }: SettingsFormProps) {
+    const { showToast } = useToast();
     const [activeTab, setActiveTab] = useState<"profile" | "notifications" | "security">("profile");
     const [loading, setLoading] = useState(false);
-    const [success, setSuccess] = useState<string | null>(null);
-    const [error, setError] = useState<string | null>(null);
 
     const handleProfileSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
+        
+        if (!window.confirm("Are you sure you want to update your profile settings?")) return;
+
         setLoading(true);
-        setSuccess(null);
-        setError(null);
 
         const formData = new FormData(e.currentTarget);
         formData.append("id", user.Id.toString());
 
         const result = await updateProfile(formData);
         if (result.success) {
-            setSuccess("Profile updated successfully!");
-            setTimeout(() => setSuccess(null), 3000);
+            showToast("Profile updated successfully!", "success");
         } else {
-            setError(result.error || "Failed to update profile.");
+            showToast(result.error || "Failed to update profile.", "error");
         }
         setLoading(false);
     };
 
     const handleSecuritySubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
+
+        if (!window.confirm("Are you sure you want to update your password?")) return;
+
         setLoading(true);
-        setSuccess(null);
-        setError(null);
 
         const formData = new FormData(e.currentTarget);
         formData.append("id", user.Id.toString());
 
         const result = await updateSecurity(formData);
         if (result.success) {
-            setSuccess("Password updated successfully!");
+            showToast("Password updated successfully!", "success");
             (e.target as HTMLFormElement).reset();
-            setTimeout(() => setSuccess(null), 3000);
         } else {
-            setError(result.error || "Failed to update security settings.");
+            showToast(result.error || "Failed to update security settings.", "error");
         }
         setLoading(false);
     };
@@ -90,14 +90,6 @@ export default function SettingsForm({ user }: SettingsFormProps) {
                     <div className="bg-white rounded-[2rem] border border-slate-100 shadow-[0_10px_40px_-10px_rgba(0,0,0,0.03)] p-8">
                         <h3 className="text-lg font-bold text-slate-800 mb-6 flex items-center justify-between">
                             Profile Details
-                            {success && (
-                                <span className="text-emerald-500 flex items-center gap-1.5 text-xs font-bold animate-in fade-in slide-in-from-right-2">
-                                    <CheckCircle2 size={14} /> {success}
-                                </span>
-                            )}
-                            {error && (
-                                <span className="text-rose-500 text-xs font-bold">{error}</span>
-                            )}
                         </h3>
 
                         <form className="space-y-5" onSubmit={handleProfileSubmit}>
@@ -141,11 +133,6 @@ export default function SettingsForm({ user }: SettingsFormProps) {
                     <div className="bg-white rounded-[2rem] border border-slate-100 shadow-[0_10px_40px_-10px_rgba(0,0,0,0.03)] p-8">
                         <h3 className="text-lg font-bold text-slate-800 mb-6 flex items-center justify-between">
                             Preferences
-                            {success && (
-                                <span className="text-emerald-500 flex items-center gap-1.5 text-xs font-bold pulse">
-                                    <CheckCircle2 size={14} /> {success}
-                                </span>
-                            )}
                         </h3>
                         <form className="space-y-4" onSubmit={handleProfileSubmit}>
                             {/* Reusing profile submit as it handles toggles too */}
@@ -183,14 +170,6 @@ export default function SettingsForm({ user }: SettingsFormProps) {
                     <div className="bg-white rounded-[2rem] border border-slate-100 shadow-[0_10px_40px_-10px_rgba(0,0,0,0.03)] p-8">
                         <h3 className="text-lg font-bold text-slate-800 mb-6 flex items-center justify-between">
                             Access & Password
-                            {success && (
-                                <span className="text-emerald-500 flex items-center gap-1.5 text-xs font-bold animate-in fade-in slide-in-from-right-2">
-                                    <CheckCircle2 size={14} /> {success}
-                                </span>
-                            )}
-                            {error && (
-                                <span className="text-rose-500 text-xs font-bold">{error}</span>
-                            )}
                         </h3>
 
                         <form className="space-y-5" onSubmit={handleSecuritySubmit}>

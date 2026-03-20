@@ -106,5 +106,5 @@ export async function AddStaffAction(formData: FormData) {
 
   // ✅ Step 4: Refresh and redirect
   revalidatePath("/dashboard/admin/staff");
-  redirect("/dashboard/admin/staff");
+  redirect("/dashboard/admin/staff?success=Staff+Member+Added+Successfully");
 }

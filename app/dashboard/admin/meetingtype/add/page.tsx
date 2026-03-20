@@ -2,6 +2,7 @@ import { AddMeetingTypeAction } from "@/app/actions/AddMeetingTypeAction";
 import React from "react";
 import Link from "next/link";
 import { Tag, FileText, ArrowLeft, Plus } from "lucide-react";
+import ConfirmationForm from "@/app/components/ConfirmationForm";
 
 export default function AddMeetingType() {
   return (
@@ -21,7 +22,11 @@ export default function AddMeetingType() {
           </div>
         </div>
 
-        <form action={AddMeetingTypeAction} className="p-6 space-y-5">
+        <ConfirmationForm 
+          action={AddMeetingTypeAction} 
+          message="Are you sure you want to create this new meeting type?"
+          className="p-6 space-y-5"
+        >
           <div className="space-y-5">
             <div className="space-y-1.5">
               <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1 flex items-center gap-2">
@@ -66,7 +71,7 @@ export default function AddMeetingType() {
               Save Type
             </button>
           </div>
-        </form>
+        </ConfirmationForm>
       </div>
     </div>
   );

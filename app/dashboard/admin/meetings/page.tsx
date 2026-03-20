@@ -344,7 +344,7 @@ export default async function MeetingsPage({
                text-decoration:none; transition:all .15s; }
         .bti.view { color:#1d4ed8; }
         .bti.edit { color:#16a34a; }
-        .bti.del  { color:#94a3b8; }
+        .bti.del  { color:#dc2626; }
         .bti.view:hover { background:#eff6ff; color:#1e40af; }
         .bti.edit:hover { background:#f0fdf4; color:#15803d; }
         .bti.del:hover  { background:#fef2f2; color:#dc2626; }

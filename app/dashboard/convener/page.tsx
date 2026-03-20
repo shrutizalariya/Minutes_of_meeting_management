@@ -2,7 +2,15 @@ import React from "react";
 import { prisma } from "@/lib/prisma";
 import ConvenerDashboardClient from "./ConvenerDashboardClient";
 
-export default async function ConvenerDashboardPage() {
+export default async function ConvenerDashboardPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ chartMonth?: string; chartYear?: string }>;
+}) {
+  const params = await searchParams;
+  const chartMonth = Number(params?.chartMonth || new Date().getMonth() + 1);
+  const chartYear = Number(params?.chartYear || new Date().getFullYear());
+
   // Fetch KPI Data
   const totalMeetings = await prisma.meetings.count();
   
@@ -45,21 +53,29 @@ export default async function ConvenerDashboardPage() {
     take: 5,
   });
 
-  // Fetch Attendance Data for Chart (last 5 meetings)
-  const recentMeetings = await prisma.meetings.findMany({
-    where: { Status: "Completed" },
-    orderBy: { MeetingDate: "desc" },
-    take: 5,
+  // Fetch Attendance Data for Chart for the selected month/year
+  const startDate = new Date(chartYear, chartMonth - 1, 1);
+  const endDate = new Date(chartYear, chartMonth, 0);
+
+  const monthMeetings = await prisma.meetings.findMany({
+    where: { 
+      Status: "Completed",
+      MeetingDate: {
+        gte: startDate,
+        lte: endDate
+      }
+    },
+    orderBy: { MeetingDate: "asc" },
     include: {
       meetingmember: true,
     },
   });
 
-  const chartData = recentMeetings.reverse().map(m => {
+  const chartData = monthMeetings.map(m => {
     const present = m.meetingmember.filter(mm => mm.IsPresent).length;
     const absent = m.meetingmember.filter(mm => !mm.IsPresent).length;
     return {
-      name: new Date(m.MeetingDate).toLocaleDateString('en-US', { month: 'short', day: '2-digit' }),
+      name: new Date(m.MeetingDate).toLocaleDateString('en-US', { day: '2-digit', month: 'short' }),
       present,
       absent,
     };
@@ -90,6 +106,8 @@ export default async function ConvenerDashboardPage() {
       isNew: n.IsNew,
     })),
     chartData,
+    chartMonth,
+    chartYear,
   };
 
   return <ConvenerDashboardClient initialData={initialData} />;

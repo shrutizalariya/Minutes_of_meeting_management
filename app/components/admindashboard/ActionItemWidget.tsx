@@ -8,44 +8,53 @@ interface ActionItemWidgetProps {
   id: number;
   task: string;
   assigned: string;
-  deadline: string; // ISO string or Date string
+  deadline: string;
   overdue: boolean;
+  priority?: 'red' | 'yellow' | 'green';
 }
 
-const ActionItemWidget: React.FC<ActionItemWidgetProps> = ({ id, task, assigned, deadline, overdue }) => {
+const ActionItemWidget: React.FC<ActionItemWidgetProps> = ({ id, task, assigned, deadline, overdue, priority = 'yellow' }) => {
   const deadlineDate = new Date(deadline);
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  // Determine background and border color
-  let bgColor = "bg-white border-slate-200 text-slate-800";
+  // Determine styles based on priority
+  const colorMap = {
+    red: { bg: "bg-rose-50/30", border: "border-rose-100", accent: "text-rose-600", label: "URGENT", labelBg: "bg-rose-100" },
+    yellow: { bg: "bg-amber-50/30", border: "border-amber-100", accent: "text-amber-600", label: "PENDING", labelBg: "bg-amber-100" },
+    green: { bg: "bg-emerald-50/30", border: "border-emerald-100", accent: "text-emerald-600", label: "RESOLVED", labelBg: "bg-emerald-100" },
+  };
 
-  if (overdue && deadlineDate <= today) {
-    bgColor = "bg-red-50 border-red-200 text-red-800"; // overdue/today
-  } else if (deadlineDate > today) {
-    bgColor = "bg-green-50 border-green-200 text-green-800"; // future
-  } else {
-    bgColor = "bg-amber-50 border-amber-200 text-amber-800"; // attended today or normal
-  }
+  const styles = colorMap[priority] || colorMap.yellow;
 
   return (
-    <div className={`p-4 border rounded-2xl ${bgColor} transition-all duration-200 relative group hover:shadow-md`}>
+    <div className={`p-5 border rounded-3xl ${styles.bg} ${styles.border} transition-all duration-300 relative group hover:shadow-sm hover:border-slate-200`}>
       <div className="flex justify-between items-start gap-4">
         <div className="flex-1">
-          <p className="font-bold text-sm tracking-tight">{task}</p>
-          <p className="text-[10px] font-semibold opacity-70 mt-1 uppercase tracking-wider">
-            Assigned: {assigned}
-          </p>
-          <p className="text-[10px] font-bold mt-0.5 uppercase tracking-widest">
-            Due: {deadlineDate.toLocaleDateString("en-US", { month: "short", day: "numeric" })}
-          </p>
+          <div className="flex items-center gap-2 mb-2">
+             <span className={`text-[8px] font-black px-1.5 py-0.5 rounded ${styles.labelBg} ${styles.accent} uppercase tracking-widest`}>
+                {styles.label}
+             </span>
+          </div>
+          <p className="font-bold text-sm tracking-tight text-slate-800 leading-snug">{task}</p>
+          
+          <div className="flex flex-col gap-1 mt-3">
+             <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
+                Assigned: <span className="text-slate-600 font-black">{assigned}</span>
+             </div>
+             <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
+                Due: <span className={overdue ? 'text-rose-600 font-black' : 'text-slate-600'}>
+                   {deadlineDate.toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                </span>
+             </div>
+          </div>
         </div>
         <Link
-          href={`/dashboard/admin/meetingmember/${id}`}
-          className="p-2 rounded-xl bg-white/50 hover:bg-white text-slate-400 hover:text-blue-600 border border-slate-100 transition-all duration-200 shadow-sm"
-          title="View Entry"
+          href={`/dashboard/admin/meetings/`}
+          className="h-9 w-9 shrink-0 inline-flex items-center justify-center rounded-xl bg-white text-slate-400 hover:text-blue-600 border border-slate-100 transition-all shadow-sm hover:shadow-md"
+          title="View"
         >
-          <Eye size={14} />
+          <Eye size={16} />
         </Link>
       </div>
     </div>

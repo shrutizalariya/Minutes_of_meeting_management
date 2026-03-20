@@ -147,11 +147,25 @@ export default async function StaffAttendanceSummary({ keyword = "", page = 1 }:
                         </div>
                       </td>
                       <td className="px-6 py-5 text-right flex justify-end">
-                        {attended === 0 && totalMeetings > 0 ? (
+                        {totalMeetings === 0 ? (
+                          <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 text-slate-400 rounded-xl text-[11px] font-bold border border-slate-100 uppercase tracking-wider">
+                            No Sessions
+                          </div>
+                        ) : percentage < 50 ? (
                           <SendAlertButton
                             staffID={staff.StaffID}
                             staffName={staff.StaffName}
                             staffEmail={staff.EmailAddress || ""}
+                            label="Critical Alert"
+                            variant="danger"
+                          />
+                        ) : percentage < 80 ? (
+                          <SendAlertButton
+                            staffID={staff.StaffID}
+                            staffName={staff.StaffName}
+                            staffEmail={staff.EmailAddress || ""}
+                            label="Send Warning"
+                            variant="warning"
                           />
                         ) : (
                           <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 text-emerald-600 rounded-xl text-[11px] font-bold border border-emerald-100/50 uppercase tracking-wider">

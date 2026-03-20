@@ -10,6 +10,8 @@ import RecentMeetings from "./RecentMeetings";
 import CriticalActionSidebarServer from "@/app/components/admindashboard/CriticalActionSidebarServer";
 import MeetingChart from "@/app/components/admindashboard/MeetingChart";
 import { getMeetingStatusStats } from "@/lib/admin/meetingStatus";
+import { cookies } from "next/headers";
+import { verifyToken } from "@/lib/auth";
 
 export default async function DashboardPage() {
   const totalMeetings = await prisma.meetings.count();
@@ -34,6 +36,17 @@ export default async function DashboardPage() {
 
   const percent = nonCancelledMeetings === 0 ? 0 : Math.round((completedMeetings / nonCancelledMeetings) * 100);
 
+  // Fetch admin name for greeting
+  let adminName = "Admin";
+  const token = (await cookies()).get("token")?.value;
+  if (token) {
+    try {
+      const payload = await verifyToken(token) as { id: number; email: string; role: string };
+      const user = await prisma.users.findUnique({ where: { Id: payload.id }, select: { Name: true } });
+      if (user?.Name) adminName = user.Name.split(" ")[0];
+    } catch (e) {}
+  }
+
   return (
     <div className="space-y-8" style={{ fontFamily: "'Sora', sans-serif" }}>
       <style>{`
@@ -44,10 +57,12 @@ export default async function DashboardPage() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 text-blue-600 font-bold text-[10px] uppercase tracking-[0.2em] mb-1">
-            <Activity size={14} strokeWidth={3} /> System Overview
+            <Activity size={14} strokeWidth={3} /> Welcome back, {adminName}
           </div>
-          <h1 className="text-3xl font-black text-slate-900 tracking-tight leading-none">Administrative Dashboard</h1>
-          <p className="text-slate-500 text-sm mt-2 font-medium">Manage meetings, track minutes, and assign action items across your organization.</p>
+          <h1 className="text-3xl font-black text-slate-900 tracking-tight leading-none italic">Administrative Dashboard</h1>
+          <p className="text-slate-500 text-sm mt-3 font-medium max-w-2xl leading-relaxed">
+            Manage meetings, audit system logs, and oversee organizational facilitation itemized by priority.
+          </p>
         </div>
         <Link
           href="/dashboard/admin/meetings/add"
@@ -93,45 +108,50 @@ export default async function DashboardPage() {
         />
       </div>
 
-      {/* Main Content Sections */}
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
-        {/* Analytics & Table Area */}
-        <div className="xl:col-span-2 space-y-8">
-          <div className="bg-white rounded-3xl border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.02)] p-6">
-            <div className="flex items-center justify-between mb-6 px-2">
-              <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
-                <Target size={18} className="text-blue-600" />
-                Meeting Status Analytics
-              </h2>
+      {/* Main Content Sections - Classic Vertical & Grid Layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Meeting Distribution Card */}
+        <div className="bg-white rounded-3xl border border-slate-100 shadow-sm p-8">
+          <div className="flex items-center gap-3 mb-8">
+            <div className="h-10 w-10 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600">
+              <Target size={20} />
             </div>
-            <div className="h-[300px] w-full">
-              <MeetingChart data={chartData} />
-            </div>
+            <h2 className="text-lg font-bold text-slate-800 tracking-tight">Meeting Status Overview</h2>
           </div>
-
-          <div className="bg-white rounded-3xl border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.02)] overflow-hidden">
-            <div className="px-6 py-5 border-b border-slate-50 flex items-center justify-between bg-white">
-              <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
-                <Zap size={18} className="text-blue-600" />
-                Recent Activity
-              </h2>
-              <Link href="/dashboard/admin/meetings" className="text-xs font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1 group">
-                View All <ArrowRight size={14} className="transition-transform group-hover:translate-x-1" />
-              </Link>
-            </div>
-            <RecentMeetings />
+          <div className="h-[350px] w-full">
+            <MeetingChart data={chartData} />
           </div>
         </div>
 
-        {/* Sidebar Area */}
-        <div className="space-y-8">
-          <div className="bg-white rounded-3xl border border-slate-100 shadow-[0_10px_40px_-5px_rgba(0,0,0,0.03)] p-6">
-            <h2 className="text-lg font-bold text-slate-800 mb-5 flex items-center gap-2">
-              <LayoutDashboard size={18} className="text-blue-600" />
-              Critical Actions
-            </h2>
+        {/* Priority Matrix Card */}
+        <div className="bg-white rounded-3xl border border-slate-100 shadow-sm p-8">
+          <div className="flex items-center gap-3 mb-8">
+            <div className="h-10 w-10 rounded-xl bg-amber-50 flex items-center justify-center text-amber-600">
+              <Clock size={20} />
+            </div>
+            <h2 className="text-lg font-bold text-slate-800 tracking-tight">Critical Matrix</h2>
+          </div>
+          <div className="custom-scrollbar overflow-y-auto max-h-[350px] pr-2">
             <CriticalActionSidebarServer />
           </div>
+        </div>
+      </div>
+
+      {/* Recent Activity Section - Full Width Card */}
+      <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
+        <div className="px-8 py-6 border-b border-slate-50 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 rounded-xl bg-slate-50 flex items-center justify-center text-indigo-600">
+               <Zap size={20} />
+            </div>
+            <h2 className="text-lg font-bold text-slate-800 tracking-tight">Recent Activity</h2>
+          </div>
+          <Link href="/dashboard/admin/meetings" className="text-xs font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1 transition-colors">
+            View All <ArrowRight size={14} />
+          </Link>
+        </div>
+        <div className="p-4">
+          <RecentMeetings showActions={true} />
         </div>
       </div>
     </div>

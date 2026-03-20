@@ -3,6 +3,7 @@ import React from 'react'
 import Link from 'next/link';
 import { EditMeetingTypeAction } from '@/app/actions/EditMeetingTypeAction';
 import { Tag, FileText, ArrowLeft, Save } from "lucide-react";
+import ConfirmationForm from "@/app/components/ConfirmationForm";
 
 async function EditMeetingType({ params }: { params: Promise<{ id: number }> }) {
     const { id } = await params;
@@ -35,7 +36,11 @@ async function EditMeetingType({ params }: { params: Promise<{ id: number }> }) 
                     </div>
                 </div>
 
-                <form action={EditMeetingTypeAction} className="p-6 space-y-5">
+                <ConfirmationForm 
+                    action={EditMeetingTypeAction} 
+                    message="Are you sure you want to update this meeting type?"
+                    className="p-6 space-y-5"
+                >
                     <input type="hidden" name="MeetingTypeID" value={data.MeetingTypeID} />
 
                     <div className="space-y-5">
@@ -84,7 +89,7 @@ async function EditMeetingType({ params }: { params: Promise<{ id: number }> }) 
                             Update Type
                         </button>
                     </div>
-                </form>
+                </ConfirmationForm>
             </div>
         </div>
     );

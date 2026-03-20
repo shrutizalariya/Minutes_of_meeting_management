@@ -7,6 +7,7 @@ import {
   LayoutDashboard, 
   Calendar, 
   Clock, 
+  Settings,
   ChevronRight 
 } from "lucide-react";
 
@@ -17,6 +18,7 @@ export default function SidebarNavigation() {
     { href: "/dashboard/staff", label: "My Workspace", icon: <LayoutDashboard size={18} /> },
     { href: "/dashboard/staff/meetings", label: "My Meetings", icon: <Calendar size={18} /> },
     { href: "/dashboard/staff/attendance", label: "Attendance", icon: <Clock size={18} /> },
+    { href: "/dashboard/staff/settings", label: "Settings", icon: <Settings size={18} /> },
   ];
 
   return (

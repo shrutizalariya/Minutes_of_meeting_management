@@ -4,6 +4,7 @@ import { AddStaffAction } from "@/app/actions/staff/AddStaffAction";
 import React from "react";
 import Link from "next/link";
 import { User, Phone, Mail, Shield, ArrowLeft, Plus, FileText } from "lucide-react";
+import ConfirmationForm from "@/app/components/ConfirmationForm";
 
 export default function AddStaff({ users = [] }: any) {
   return (
@@ -23,7 +24,11 @@ export default function AddStaff({ users = [] }: any) {
           </div>
         </div>
 
-        <form action={AddStaffAction} className="p-6 space-y-5">
+        <ConfirmationForm 
+          action={AddStaffAction} 
+          message="Are you sure you want to add this new staff member?"
+          className="p-6 space-y-5"
+        >
           <div className="space-y-5">
             {/* Staff Name */}
             <div className="space-y-1.5">
@@ -128,7 +133,7 @@ export default function AddStaff({ users = [] }: any) {
               Save Member
             </button>
           </div>
-        </form>
+        </ConfirmationForm>
       </div>
     </div>
   );

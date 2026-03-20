@@ -37,5 +37,5 @@ export async function EditStaffAction(formData: FormData) {
   });
 
   revalidatePath("/dashboard/admin/staff");
-  redirect("/dashboard/admin/staff");
+  redirect("/dashboard/admin/staff?success=Staff+Member+Updated+Successfully");
 }

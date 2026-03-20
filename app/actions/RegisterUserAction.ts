@@ -45,7 +45,7 @@ export async function RegisterUserAction(formData: FormData) {
   const name = formData.get("name") as string;
   const email = (formData.get("email") as string).toLowerCase(); // normalize
   const password = formData.get("password") as string;
-  const role = (formData.get("role") as string) || "user";
+  const role = ((formData.get("role") as string) || "user").toLowerCase();
 
   // Check if role is admin - Block registration
   if (role.toLowerCase() === "admin") {
